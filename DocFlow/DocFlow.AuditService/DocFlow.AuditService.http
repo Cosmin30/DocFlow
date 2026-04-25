@@ -1,0 +1,6 @@
+@DocFlow.AuditService_HostAddress = http://localhost:5226
+
+GET {{DocFlow.AuditService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

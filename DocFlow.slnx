@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/DocFlow/">
+    <Project Path="DocFlow/DocFlow.ApprovalService/DocFlow.ApprovalService.csproj" />
+    <Project Path="DocFlow/DocFlow.AuditService/DocFlow.AuditService.csproj" />
+    <Project Path="DocFlow/DocFlow.AuthService/DocFlow.AuthService.csproj" />
+    <Project Path="DocFlow/DocFlow.BuildingBlocks/DocFlow.BuildingBlocks.csproj" />
+    <Project Path="DocFlow/DocFlow.DocumentService/DocFlow.DocumentService.csproj" />
+    <Project Path="DocFlow/DocFlow.Gateway/DocFlow.Gateway.csproj" />
+  </Folder>
+</Solution>
