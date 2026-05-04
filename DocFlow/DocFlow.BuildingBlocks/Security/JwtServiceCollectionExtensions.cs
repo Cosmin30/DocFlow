@@ -13,6 +13,11 @@ public static class JwtServiceCollectionExtensions
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 
+        if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
+        {
+            throw new InvalidOperationException("JWT key is missing or too short. Configure Jwt:Key with at least 32 characters.");
+        }
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {

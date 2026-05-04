@@ -5,7 +5,6 @@ using DocFlow.DocumentService.Application.CQRS.Documents.Commands.RestoreDocumen
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.UpdateDocument;
 using DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocumentVersions;
 using DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocuments;
-using DocFlow.DocumentService.Application.Services;
 using DocFlow.DocumentService.Domain.Entities;
 using DocFlow.DocumentService.Infrastructure.Persistence;
 using DocFlow.DocumentService.Infrastructure.Repositories;
@@ -23,7 +22,6 @@ builder.Services.AddDbContext<DocumentDbContext>(options =>
 builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
-builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IQueryHandler<GetDocumentsQuery, List<Document>>, GetDocumentsQueryHandler>();
 builder.Services.AddScoped<IQueryHandler<GetDocumentVersionsQuery, List<DocumentVersion>>, GetDocumentVersionsQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<CreateDocumentCommand, Document>, CreateDocumentCommandHandler>();
@@ -32,14 +30,12 @@ builder.Services.AddScoped<ICommandHandler<RestoreDocumentVersionCommand, bool>,
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<DocumentDbContext>();
-    db.Database.EnsureCreated();
-}
-
 if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<DocumentDbContext>();
+    db.Database.Migrate();
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }

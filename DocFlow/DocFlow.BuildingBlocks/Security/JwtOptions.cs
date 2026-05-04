@@ -6,5 +6,5 @@ public sealed class JwtOptions
 
     public string Issuer { get; set; } = "DocFlow";
     public string Audience { get; set; } = "DocFlow.Client";
-    public string Key { get; set; } = "DocFlow-Change-This-Key-Before-Production-32-Bytes-Minimum";
+    public string Key { get; set; } = string.Empty;
 }

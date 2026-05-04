@@ -15,6 +15,11 @@ public sealed class UpdateDocumentCommandHandler(IDocumentRepository repository)
             return null;
         }
 
+        if (document.OwnerUserId != command.UserId)
+        {
+            return null;
+        }
+
         document.Title = command.Request.Title ?? document.Title;
         document.Category = command.Request.Category ?? document.Category;
         document.Department = command.Request.Department ?? document.Department;

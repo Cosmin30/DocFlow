@@ -5,4 +5,5 @@ namespace DocFlow.DocumentService.Application.CQRS.Documents.Commands.RestoreDoc
 public sealed record RestoreDocumentVersionCommand(
     Guid Id,
     int VersionNumber,
-    Guid TenantId) : ICommand<bool>;
+    Guid TenantId,
+    Guid UserId) : ICommand<bool>;

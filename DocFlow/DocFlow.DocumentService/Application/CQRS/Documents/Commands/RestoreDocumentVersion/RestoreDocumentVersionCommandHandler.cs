@@ -16,6 +16,11 @@ public sealed class RestoreDocumentVersionCommandHandler(IDocumentRepository rep
             return false;
         }
 
+        if (document.OwnerUserId != command.UserId)
+        {
+            return false;
+        }
+
         document.CurrentVersionNumber = command.VersionNumber;
         await repository.SaveChangesAsync(cancellationToken);
 

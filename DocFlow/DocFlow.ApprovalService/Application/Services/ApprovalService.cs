@@ -26,10 +26,15 @@ public sealed class ApprovalService(IApprovalRepository repository) : IApprovalS
     public Task<List<ApprovalRequest>> GetPendingAsync(Guid tenantId, Guid userId, CancellationToken cancellationToken) =>
         repository.GetPendingForUserAsync(tenantId, userId, cancellationToken);
 
-    public async Task<ApprovalRequest?> DecideAsync(Guid id, Guid tenantId, DecisionRequest request, CancellationToken cancellationToken)
+    public async Task<ApprovalRequest?> DecideAsync(Guid id, Guid tenantId, Guid decidedByUserId, DecisionRequest request, CancellationToken cancellationToken)
     {
         var approval = await repository.GetByIdAsync(id, tenantId, cancellationToken);
         if (approval is null)
+        {
+            return null;
+        }
+
+        if (approval.AssignedToUserId != decidedByUserId)
         {
             return null;
         }

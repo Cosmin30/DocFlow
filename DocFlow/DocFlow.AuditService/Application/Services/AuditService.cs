@@ -6,7 +6,13 @@ namespace DocFlow.AuditService.Application.Services;
 
 public sealed class AuditService(IAuditRepository repository) : IAuditService
 {
-    public async Task<AuditLog> WriteAsync(Guid tenantId, Guid? userId, WriteAuditRequest request, CancellationToken cancellationToken)
+    public async Task<AuditLog> WriteAsync(
+        Guid tenantId,
+        Guid? userId,
+        string? ipAddress,
+        string? device,
+        WriteAuditRequest request,
+        CancellationToken cancellationToken)
     {
         var log = new AuditLog
         {
@@ -16,8 +22,8 @@ public sealed class AuditService(IAuditRepository repository) : IAuditService
             EntityType = request.EntityType,
             EntityId = request.EntityId,
             MetadataJson = request.MetadataJson,
-            IpAddress = string.IsNullOrWhiteSpace(request.IpAddress) ? "unknown" : request.IpAddress,
-            Device = string.IsNullOrWhiteSpace(request.Device) ? "unknown" : request.Device
+            IpAddress = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress,
+            Device = string.IsNullOrWhiteSpace(device) ? "unknown" : device
         };
 
         await repository.AddAsync(log, cancellationToken);

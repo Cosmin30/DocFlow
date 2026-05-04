@@ -14,7 +14,9 @@ public sealed class AuditController(IAuditService auditService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Write([FromBody] WriteAuditRequest request, CancellationToken cancellationToken)
     {
-        var audit = await auditService.WriteAsync(User.GetTenantId(), User.GetUserId(), request, cancellationToken);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var device = HttpContext.Request.Headers.UserAgent.ToString();
+        var audit = await auditService.WriteAsync(User.GetTenantId(), User.GetUserId(), ip, device, request, cancellationToken);
         return CreatedAtAction(nameof(List), new { id = audit.Id }, audit);
     }
 

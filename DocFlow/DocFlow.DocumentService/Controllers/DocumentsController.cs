@@ -63,7 +63,7 @@ public sealed class DocumentsController(
     public async Task<IActionResult> Restore(Guid id, int versionNumber, CancellationToken cancellationToken)
     {
         var restored = await restoreDocumentVersionHandler.Handle(
-            new RestoreDocumentVersionCommand(id, versionNumber, User.GetTenantId()),
+            new RestoreDocumentVersionCommand(id, versionNumber, User.GetTenantId(), User.GetUserId()),
             cancellationToken);
 
         return restored ? Ok() : NotFound();

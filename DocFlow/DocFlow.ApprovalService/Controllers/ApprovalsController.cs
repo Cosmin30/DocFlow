@@ -28,7 +28,7 @@ public sealed class ApprovalsController(IApprovalService approvalService) : Cont
     [HttpPost("{id:guid}/decision")]
     public async Task<IActionResult> Decide(Guid id, [FromBody] DecisionRequest request, CancellationToken cancellationToken)
     {
-        var approval = await approvalService.DecideAsync(id, User.GetTenantId(), request, cancellationToken);
+        var approval = await approvalService.DecideAsync(id, User.GetTenantId(), User.GetUserId(), request, cancellationToken);
         return approval is null ? NotFound() : Ok(approval);
     }
 }

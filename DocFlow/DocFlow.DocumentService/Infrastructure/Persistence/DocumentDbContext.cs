@@ -1,4 +1,5 @@
 using DocFlow.DocumentService.Domain.Entities;
+using DocFlow.BuildingBlocks.Validation;
 using Microsoft.EntityFrameworkCore;
 
 namespace DocFlow.DocumentService.Infrastructure.Persistence;
@@ -16,5 +17,17 @@ public sealed class DocumentDbContext(DbContextOptions<DocumentDbContext> option
         modelBuilder.Entity<DocumentVersion>()
             .HasIndex(x => new { x.DocumentId, x.VersionNumber })
             .IsUnique();
+    }
+
+    public override int SaveChanges()
+    {
+        this.ValidateTrackedEntities();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        this.ValidateTrackedEntities();
+        return base.SaveChangesAsync(cancellationToken);
     }
 }
