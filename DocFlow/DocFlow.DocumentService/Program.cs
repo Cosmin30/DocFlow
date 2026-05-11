@@ -9,8 +9,17 @@ using DocFlow.DocumentService.Domain.Entities;
 using DocFlow.DocumentService.Infrastructure.Persistence;
 using DocFlow.DocumentService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using DocFlow.BuildingBlocks.Messaging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseElasticsearchLogging(
+    elasticUri: builder.Configuration["Elasticsearch:Uri"] ?? "http://localhost:9200",
+    indexFormat: "docflow-document-service"
+);
+
+builder.Services.AddKafkaEventBus(builder.Configuration["Kafka:BootstrapServers"] ?? "localhost:9092");
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -39,6 +48,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

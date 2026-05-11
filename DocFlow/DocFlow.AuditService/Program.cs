@@ -1,10 +1,18 @@
 using DocFlow.AuditService.Application.Services;
 using DocFlow.AuditService.Infrastructure.Persistence;
+using DocFlow.AuditService.Infrastructure.Messaging;
 using DocFlow.AuditService.Infrastructure.Repositories;
 using DocFlow.BuildingBlocks.Security;
+using DocFlow.BuildingBlocks.Messaging;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseElasticsearchLogging(
+    elasticUri: builder.Configuration["Elasticsearch:Uri"] ?? "http://localhost:9200",
+    indexFormat: "docflow-audit-service"
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -18,6 +26,8 @@ builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 
+builder.Services.AddHostedService<KafkaAuditConsumer>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -29,6 +39,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

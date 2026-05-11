@@ -42,7 +42,7 @@ public static class DbContextValidationExtensions
         }
     }
 
-    private static void ValidateRequiredGuids(object entity, ICollection<ValidationResult> validationResults)
+    private static void ValidateRequiredGuids(object entity, List<ValidationResult> validationResults)
     {
         var properties = entity.GetType().GetProperties()
             .Where(p => p.PropertyType == typeof(Guid) && Attribute.IsDefined(p, typeof(RequiredAttribute)));

@@ -3,9 +3,16 @@ using DocFlow.AuthService.Infrastructure.Persistence;
 using DocFlow.AuthService.Infrastructure.Repositories;
 using DocFlow.AuthService.Infrastructure.Security;
 using DocFlow.BuildingBlocks.Security;
+using DocFlow.BuildingBlocks.Messaging;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseElasticsearchLogging(
+    elasticUri: builder.Configuration["Elasticsearch:Uri"] ?? "http://localhost:9200",
+    indexFormat: "docflow-auth-service"
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -33,6 +40,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

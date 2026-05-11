@@ -1,10 +1,12 @@
 using DocFlow.ApprovalService.Application.Contracts;
 using DocFlow.ApprovalService.Domain.Entities;
 using DocFlow.ApprovalService.Infrastructure.Repositories;
+using DocFlow.BuildingBlocks.Messaging;
+using DocFlow.BuildingBlocks.Messaging.Events;
 
 namespace DocFlow.ApprovalService.Application.Services;
 
-public sealed class ApprovalService(IApprovalRepository repository) : IApprovalService
+public sealed class ApprovalService(IApprovalRepository repository, IEventBus eventBus) : IApprovalService
 {
     public async Task<ApprovalRequest> CreateAsync(Guid tenantId, Guid requestedByUserId, CreateApprovalRequest request, CancellationToken cancellationToken)
     {
@@ -20,6 +22,29 @@ public sealed class ApprovalService(IApprovalRepository repository) : IApprovalS
 
         await repository.AddAsync(approval, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
+
+        await eventBus.PublishAsync(
+            new ApprovalRequestedIntegrationEvent(
+                tenantId,
+                approval.Id,
+                approval.DocumentId,
+                requestedByUserId,
+                approval.AssignedToUserId,
+                approval.Comment,
+                DateTime.UtcNow),
+            topicName: "docflow.approval.requested",
+            cancellationToken);
+
+        await eventBus.PublishAsync(
+            new NotificationIntegrationEvent(
+                tenantId,
+                UserId: approval.AssignedToUserId,
+                Title: "Approval requested",
+                Message: $"You have a pending approval for document {approval.DocumentId}.",
+                CreatedAtUtc: DateTime.UtcNow),
+            topicName: "docflow.notifications",
+            cancellationToken);
+
         return approval;
     }
 
@@ -44,6 +69,29 @@ public sealed class ApprovalService(IApprovalRepository repository) : IApprovalS
         approval.ResolvedAtUtc = DateTime.UtcNow;
 
         await repository.SaveChangesAsync(cancellationToken);
+
+        await eventBus.PublishAsync(
+            new ApprovalDecidedIntegrationEvent(
+                tenantId,
+                approval.Id,
+                approval.DocumentId,
+                decidedByUserId,
+                request.Approve,
+                approval.Comment,
+                approval.ResolvedAtUtc.Value),
+            topicName: "docflow.approval.decided",
+            cancellationToken);
+
+        await eventBus.PublishAsync(
+            new NotificationIntegrationEvent(
+                tenantId,
+                UserId: approval.RequestedByUserId,
+                Title: request.Approve ? "Approval approved" : "Approval rejected",
+                Message: $"Approval for document {approval.DocumentId} was {(request.Approve ? "approved" : "rejected")}.",
+                CreatedAtUtc: DateTime.UtcNow),
+            topicName: "docflow.notifications",
+            cancellationToken);
+
         return approval;
     }
 }
