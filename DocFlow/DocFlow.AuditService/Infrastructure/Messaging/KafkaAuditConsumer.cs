@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using DocFlow.AuditService.Application.Contracts;
 using DocFlow.AuditService.Application.Services;
 using DocFlow.BuildingBlocks.Messaging.Events;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,13 +12,12 @@ namespace DocFlow.AuditService.Infrastructure.Messaging;
 
 public sealed class KafkaAuditConsumer(
     IServiceProvider serviceProvider,
+    IConfiguration configuration,
     ILogger<KafkaAuditConsumer> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var bootstrapServers = Environment.GetEnvironmentVariable("KAFKA__BOOTSTRAPSERVERS")
-            ?? Environment.GetEnvironmentVariable("Kafka__BootstrapServers")
-            ?? "localhost:9092";
+        var bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "localhost:9092";
 
         var config = new ConsumerConfig
         {

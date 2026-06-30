@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using DocFlow.BuildingBlocks.Messaging.Events;
 using DocFlow.Gateway.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,13 +11,12 @@ namespace DocFlow.Gateway.Infrastructure.Messaging;
 
 public sealed class KafkaNotificationsConsumer(
     IHubContext<NotificationsHub> hubContext,
+    IConfiguration configuration,
     ILogger<KafkaNotificationsConsumer> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var bootstrapServers = Environment.GetEnvironmentVariable("KAFKA__BOOTSTRAPSERVERS")
-            ?? Environment.GetEnvironmentVariable("Kafka__BootstrapServers")
-            ?? "localhost:9092";
+        var bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "localhost:9092";
 
         var config = new ConsumerConfig
         {
