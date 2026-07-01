@@ -35,6 +35,7 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
     db.Database.Migrate();
+    await db.SeedAsync();
 
     app.UseSwagger();
     app.UseSwaggerUI();

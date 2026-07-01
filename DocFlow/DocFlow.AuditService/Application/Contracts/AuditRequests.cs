@@ -3,7 +3,7 @@ namespace DocFlow.AuditService.Application.Contracts;
 using System.ComponentModel.DataAnnotations;
 
 public sealed record WriteAuditRequest(
-    [property: Required, StringLength(100, MinimumLength = 2)] string Action,
-    [property: Required, StringLength(100, MinimumLength = 2)] string EntityType,
-    [property: Required, StringLength(100, MinimumLength = 1)] string EntityId,
-    [property: StringLength(4000)] string? MetadataJson);
+    [Required, StringLength(100, MinimumLength = 2)] string Action,
+    [Required, StringLength(100, MinimumLength = 2)] string EntityType,
+    [Required, StringLength(100, MinimumLength = 1)] string EntityId,
+    [StringLength(4000)] string? MetadataJson);

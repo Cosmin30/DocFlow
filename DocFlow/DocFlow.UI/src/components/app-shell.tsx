@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { Activity, FileText, LayoutDashboard, LogIn, ScrollText, ShieldCheck, Workflow } from 'lucide-react'
-import { clearSessionTokens } from '@/lib/auth'
+import { logout } from '@/lib/auth'
 
 const navigationItems = [
   { to: '/dashboard', label: 'Panou', icon: LayoutDashboard },
@@ -73,8 +73,8 @@ export function AppShell() {
           <Button
             variant="secondary"
             className="mt-auto justify-start gap-2"
-            onClick={() => {
-              clearSessionTokens()
+            onClick={async () => {
+              await logout()
               window.location.href = '/login'
             }}
           >

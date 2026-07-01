@@ -21,3 +21,19 @@ export function clearSessionTokens() {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
 }
+
+export async function logout() {
+  try {
+    const token = getAccessToken()
+    if (token) {
+      await fetch('/auth/logout-all', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    }
+  } finally {
+    clearSessionTokens()
+  }
+}

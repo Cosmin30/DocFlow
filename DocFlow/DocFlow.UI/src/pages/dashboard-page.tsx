@@ -4,12 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Activity, FileText, Workflow, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, type ApprovalItem, type AuditItem, type DocumentItem } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 
 const emptyMessage = 'Nu există date încă în baza de date.'
 
 export function DashboardPage() {
+  const navigate = useNavigate()
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [approvals, setApprovals] = useState<ApprovalItem[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditItem[]>([])
@@ -74,7 +76,7 @@ export function DashboardPage() {
           <h3 className="text-2xl font-semibold tracking-tight">Panou principal</h3>
           <p className="text-sm text-muted-foreground">Prezentare rapidă a datelor venite din backend.</p>
         </div>
-        <Button variant="secondary">Creează document</Button>
+        <Button variant="secondary" onClick={() => navigate('/documents/new')}>Creează document</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

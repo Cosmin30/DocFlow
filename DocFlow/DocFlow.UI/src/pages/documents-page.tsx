@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, type DocumentItem } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { Search, Upload } from 'lucide-react'
@@ -19,6 +20,7 @@ function confidentialityLabel(value: number | string) {
 }
 
 export function DocumentsPage() {
+  const navigate = useNavigate()
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -51,7 +53,7 @@ export function DocumentsPage() {
           <h3 className="text-2xl font-semibold tracking-tight">Documente</h3>
           <p className="text-sm text-muted-foreground">Răsfoiește, caută și încarcă documente din backend.</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => navigate('/documents/new')}>
           <Upload className="h-4 w-4" />
           Încarcă document
         </Button>
@@ -95,7 +97,7 @@ export function DocumentsPage() {
                 </TableRow>
               ) : (
                 documents.map((document) => (
-                  <TableRow key={document.id}>
+                  <TableRow key={document.id} className="cursor-pointer" onClick={() => navigate(`/documents/${document.id}`)}>
                     <TableCell className="font-medium">{document.title}</TableCell>
                     <TableCell>{document.category}</TableCell>
                     <TableCell>{document.department}</TableCell>

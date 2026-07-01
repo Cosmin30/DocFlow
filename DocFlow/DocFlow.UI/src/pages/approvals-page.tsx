@@ -21,6 +21,7 @@ export function ApprovalsPage() {
   const [approvals, setApprovals] = useState<ApprovalItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [pendingActionId, setPendingActionId] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +43,25 @@ export function ApprovalsPage() {
 
     void load()
   }, [])
+
+  const handleDecision = async (approvalId: string, approve: boolean) => {
+    setPendingActionId(approvalId)
+    setErrorMessage(null)
+
+    const result = await api.post<ApprovalItem>(`/approvals/${approvalId}/decision`, {
+      approve,
+      comment: approve ? 'Aprobat din UI.' : 'Respins din UI.',
+    })
+
+    setPendingActionId(null)
+
+    if (!result.ok || !result.data) {
+      setErrorMessage(result.error ?? 'Nu am putut salva decizia.')
+      return
+    }
+
+    setApprovals((current) => current.filter((item) => item.id !== approvalId))
+  }
 
   return (
     <div className="space-y-6">
@@ -83,8 +103,12 @@ export function ApprovalsPage() {
                       </div>
                       <Separator className="my-4" />
                       <div className="flex flex-col gap-3 sm:flex-row">
-                        <Button variant="secondary">Aprobă</Button>
-                        <Button variant="outline">Cere modificări</Button>
+                        <Button variant="secondary" disabled={pendingActionId === item.id} onClick={() => void handleDecision(item.id, true)}>
+                          {pendingActionId === item.id ? 'Se salvează...' : 'Aprobă'}
+                        </Button>
+                        <Button variant="outline" disabled={pendingActionId === item.id} onClick={() => void handleDecision(item.id, false)}>
+                          {pendingActionId === item.id ? 'Se salvează...' : 'Cere modificări'}
+                        </Button>
                       </div>
                     </div>
                   ))

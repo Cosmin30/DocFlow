@@ -10,9 +10,9 @@ import { setSessionTokens } from '@/lib/auth'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [tenantSlug, setTenantSlug] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [tenantSlug, setTenantSlug] = useState('contabilitate')
+  const [email, setEmail] = useState('admin@docflow.ro')
+  const [password, setPassword] = useState('DocFlow123!')
   const [device, setDevice] = useState('Browser local')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -129,6 +129,13 @@ export function LoginPage() {
                 {isSubmitting ? 'Se verifică datele...' : 'Intră în aplicație'}
               </Button>
             </form>
+
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Nu ai cont încă?</p>
+              <Button type="button" variant="outline" className="w-full" onClick={() => navigate('/register')}>
+                Creează cont
+              </Button>
+            </div>
 
             <p className="text-sm text-muted-foreground">
               Dacă baza de date este goală, autentificarea va eșua, iar paginile protejate vor afișa stări goale în română.

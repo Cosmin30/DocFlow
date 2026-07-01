@@ -36,6 +36,7 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     db.Database.Migrate();
+    await db.SeedAsync(scope.ServiceProvider.GetRequiredService<IPasswordHasher>());
 
     app.UseSwagger();
     app.UseSwaggerUI();
