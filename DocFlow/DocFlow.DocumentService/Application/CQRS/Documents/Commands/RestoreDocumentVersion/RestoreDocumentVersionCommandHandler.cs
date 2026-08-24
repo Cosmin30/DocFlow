@@ -1,9 +1,10 @@
 using DocFlow.DocumentService.Application.Abstractions;
+using MediatR;
 
 namespace DocFlow.DocumentService.Application.CQRS.Documents.Commands.RestoreDocumentVersion;
 
 public sealed class RestoreDocumentVersionCommandHandler(IDocumentRepository repository)
-    : ICommandHandler<RestoreDocumentVersionCommand, bool>
+    : IRequestHandler<RestoreDocumentVersionCommand, bool>
 {
     public async Task<bool> Handle(RestoreDocumentVersionCommand command, CancellationToken cancellationToken)
     {

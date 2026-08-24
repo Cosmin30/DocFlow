@@ -1,11 +1,11 @@
 using DocFlow.DocumentService.Application.Abstractions;
-using DocFlow.DocumentService.Application.CQRS.Abstractions;
 using DocFlow.DocumentService.Domain.Entities;
+using MediatR;
 
 namespace DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocumentVersions;
 
 public sealed class GetDocumentVersionsQueryHandler(IDocumentRepository repository)
-    : IQueryHandler<GetDocumentVersionsQuery, List<DocumentVersion>>
+    : IRequestHandler<GetDocumentVersionsQuery, List<DocumentVersion>>
 {
     public async Task<List<DocumentVersion>> Handle(GetDocumentVersionsQuery query, CancellationToken cancellationToken)
     {

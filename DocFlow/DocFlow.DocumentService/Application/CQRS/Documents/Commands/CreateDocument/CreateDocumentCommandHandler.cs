@@ -1,12 +1,12 @@
 using DocFlow.DocumentService.Application.Abstractions;
-using DocFlow.DocumentService.Application.Contracts;
 using DocFlow.DocumentService.Domain.Entities;
 using DocFlow.BuildingBlocks.Messaging.Outbox;
+using MediatR;
 
 namespace DocFlow.DocumentService.Application.CQRS.Documents.Commands.CreateDocument;
 
 public sealed class CreateDocumentCommandHandler(IDocumentRepository repository, IOutboxStore outboxStore)
-    : ICommandHandler<CreateDocumentCommand, Document>
+    : IRequestHandler<CreateDocumentCommand, Document>
 {
     public async Task<Document> Handle(CreateDocumentCommand command, CancellationToken cancellationToken)
     {
@@ -27,10 +27,10 @@ public sealed class CreateDocumentCommandHandler(IDocumentRepository repository,
 
         foreach (var domainEvent in document.DomainEvents)
         {
-            if (domainEvent is DocumentCreatedDomainEvent createdEvent)
+            if (domainEvent is DocumentCreatedDomainEvent)
             {
                 await outboxStore.AddAsync(
-                    new Events.DocumentCreatedIntegrationEvent(
+                    new BuildingBlocks.Messaging.Events.DocumentCreatedIntegrationEvent(
                         command.TenantId,
                         document.Id,
                         command.UserId,
@@ -40,7 +40,7 @@ public sealed class CreateDocumentCommandHandler(IDocumentRepository repository,
                     cancellationToken);
 
                 await outboxStore.AddAsync(
-                    new Events.NotificationIntegrationEvent(
+                    new BuildingBlocks.Messaging.Events.NotificationIntegrationEvent(
                         command.TenantId,
                         UserId: command.UserId,
                         Title: "Document created",

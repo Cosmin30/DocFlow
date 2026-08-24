@@ -1,5 +1,4 @@
 using DocFlow.BuildingBlocks.Security;
-using DocFlow.DocumentService.Application.CQRS.Abstractions;
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.CreateDocument;
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.RestoreDocumentVersion;
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.UpdateDocument;
@@ -7,6 +6,7 @@ using DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocumentVers
 using DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocuments;
 using DocFlow.DocumentService.Application.Contracts;
 using DocFlow.DocumentService.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,19 +15,14 @@ namespace DocFlow.DocumentService.Controllers;
 [ApiController]
 [Route("api/documents")]
 [Authorize]
-public sealed class DocumentsController(
-    IQueryHandler<GetDocumentsQuery, List<Document>> getDocumentsHandler,
-    ICommandHandler<CreateDocumentCommand, Document> createDocumentHandler,
-    ICommandHandler<UpdateDocumentCommand, Document?> updateDocumentHandler,
-    IQueryHandler<GetDocumentVersionsQuery, List<DocumentVersion>> getDocumentVersionsHandler,
-    ICommandHandler<RestoreDocumentVersionCommand, bool> restoreDocumentVersionHandler) : ControllerBase
+public sealed class DocumentsController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
         try
         {
-            var documents = await getDocumentsHandler.Handle(new GetDocumentsQuery(User.GetTenantId()), cancellationToken);
+            var documents = await mediator.Send(new GetDocumentsQuery(User.GetTenantId()), cancellationToken);
             return Ok(documents);
         }
         catch (Exception ex)
@@ -41,7 +36,7 @@ public sealed class DocumentsController(
     {
         try
         {
-            var document = await createDocumentHandler.Handle(
+            var document = await mediator.Send(
                 new CreateDocumentCommand(User.GetTenantId(), User.GetUserId(), request),
                 cancellationToken);
 
@@ -58,7 +53,7 @@ public sealed class DocumentsController(
     {
         try
         {
-            var document = await updateDocumentHandler.Handle(
+            var document = await mediator.Send(
                 new UpdateDocumentCommand(id, User.GetTenantId(), User.GetUserId(), request),
                 cancellationToken);
 
@@ -75,7 +70,7 @@ public sealed class DocumentsController(
     {
         try
         {
-            var versions = await getDocumentVersionsHandler.Handle(
+            var versions = await mediator.Send(
                 new GetDocumentVersionsQuery(id, User.GetTenantId()),
                 cancellationToken);
 
@@ -92,7 +87,7 @@ public sealed class DocumentsController(
     {
         try
         {
-            var restored = await restoreDocumentVersionHandler.Handle(
+            var restored = await mediator.Send(
                 new RestoreDocumentVersionCommand(id, versionNumber, User.GetTenantId(), User.GetUserId()),
                 cancellationToken);
 
