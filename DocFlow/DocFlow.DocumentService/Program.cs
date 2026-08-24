@@ -1,7 +1,6 @@
 using DocFlow.BuildingBlocks.Security;
 using DocFlow.BuildingBlocks.Messaging;
 using DocFlow.BuildingBlocks.Messaging.Outbox;
-using DocFlow.BuildingBlocks.Observability;
 using DocFlow.BuildingBlocks.Resilience;
 using DocFlow.DocumentService.Application.Abstractions;
 using DocFlow.DocumentService.Application.Behaviors;
@@ -31,32 +30,8 @@ builder.Services.AddDbContext<DocumentDbContext>(options =>
 builder.Services.AddOutbox<DocumentDbContext>();
 builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 builder.Services.AddDocFlowHealthChecks("DocFlow.DocumentService");
-builder.Services.AddDocFlowOpenTelemetry("DocFlow.DocumentService");
 builder.Services.AddDocFlowResilience();
 builder.Services.AddMemoryCache();
-
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-})
-.AddApiExplorer(options =>
-{
-    options.GroupNameFormat = "'v'VVV";
-    options.SubstituteApiVersionInUrl = true;
-});
-
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("fixed", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 100;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 10;
-    });
-});
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -82,7 +57,6 @@ if (app.Environment.IsDevelopment())
 app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

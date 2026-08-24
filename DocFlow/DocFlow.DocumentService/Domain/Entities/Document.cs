@@ -77,7 +77,7 @@ public sealed class Document : AggregateRoot
             CreatedAtUtc = DateTime.UtcNow
         };
 
-        document.AddVersion(1, fileName, storagePath, sizeBytes, ownerUserId);
+        document.AddVersion(fileName, storagePath, sizeBytes, ownerUserId);
 
         document.RaiseDomainEvent(new DocumentCreatedDomainEvent(document.Id, tenantId, ownerUserId, title));
 

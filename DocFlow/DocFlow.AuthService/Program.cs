@@ -25,17 +25,6 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 builder.Services.AddDocFlowHealthChecks("DocFlow.AuthService");
 
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("auth", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 30;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 5;
-    });
-});
-
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -58,7 +47,6 @@ if (app.Environment.IsDevelopment())
 app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

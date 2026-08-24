@@ -44,7 +44,9 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         }
         catch (ValidationException ex)
         {
-            return ValidationProblem(ex.Errors.Select(e => new Microsoft.AspNetCore.Mvc.ModelStateModelError(e.PropertyName, e.ErrorMessage)).ToArray());
+            foreach (var error in ex.Errors)
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            return ValidationProblem();
         }
         catch (Exception ex)
         {
@@ -65,7 +67,9 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         }
         catch (ValidationException ex)
         {
-            return ValidationProblem(ex.Errors.Select(e => new Microsoft.AspNetCore.Mvc.ModelStateModelError(e.PropertyName, e.ErrorMessage)).ToArray());
+            foreach (var error in ex.Errors)
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            return ValidationProblem();
         }
         catch (Exception ex)
         {
