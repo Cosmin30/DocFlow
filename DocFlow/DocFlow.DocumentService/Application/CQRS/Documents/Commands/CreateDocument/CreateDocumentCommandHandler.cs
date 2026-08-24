@@ -3,10 +3,11 @@ using DocFlow.DocumentService.Application.CQRS.Abstractions;
 using DocFlow.DocumentService.Domain.Entities;
 using DocFlow.BuildingBlocks.Messaging;
 using DocFlow.BuildingBlocks.Messaging.Events;
+using DocFlow.BuildingBlocks.Messaging.Outbox;
 
 namespace DocFlow.DocumentService.Application.CQRS.Documents.Commands.CreateDocument;
 
-public sealed class CreateDocumentCommandHandler(IDocumentRepository repository, IEventBus eventBus)
+public sealed class CreateDocumentCommandHandler(IDocumentRepository repository, IOutboxStore outboxStore)
     : ICommandHandler<CreateDocumentCommand, Document>
 {
     public async Task<Document> Handle(CreateDocumentCommand command, CancellationToken cancellationToken)
@@ -40,9 +41,8 @@ public sealed class CreateDocumentCommandHandler(IDocumentRepository repository,
         };
 
         await repository.AddVersionAsync(initialVersion, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
 
-        await eventBus.PublishAsync(
+        await outboxStore.AddAsync(
             new DocumentCreatedIntegrationEvent(
                 command.TenantId,
                 document.Id,
@@ -52,7 +52,7 @@ public sealed class CreateDocumentCommandHandler(IDocumentRepository repository,
             topicName: "docflow.document.created",
             cancellationToken);
 
-        await eventBus.PublishAsync(
+        await outboxStore.AddAsync(
             new NotificationIntegrationEvent(
                 command.TenantId,
                 UserId: command.UserId,
@@ -61,6 +61,8 @@ public sealed class CreateDocumentCommandHandler(IDocumentRepository repository,
                 CreatedAtUtc: DateTime.UtcNow),
             topicName: "docflow.notifications",
             cancellationToken);
+
+        await repository.SaveChangesAsync(cancellationToken);
 
         return document;
     }

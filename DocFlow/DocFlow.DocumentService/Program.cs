@@ -1,4 +1,6 @@
 using DocFlow.BuildingBlocks.Security;
+using DocFlow.BuildingBlocks.Messaging;
+using DocFlow.BuildingBlocks.Messaging.Outbox;
 using DocFlow.DocumentService.Application.Abstractions;
 using DocFlow.DocumentService.Application.CQRS.Abstractions;
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.CreateDocument;
@@ -10,7 +12,6 @@ using DocFlow.DocumentService.Domain.Entities;
 using DocFlow.DocumentService.Infrastructure.Persistence;
 using DocFlow.DocumentService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using DocFlow.BuildingBlocks.Messaging;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<DocumentDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddOutbox<DocumentDbContext>();
 builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();

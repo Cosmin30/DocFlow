@@ -1,4 +1,5 @@
 using DocFlow.DocumentService.Domain.Entities;
+using DocFlow.BuildingBlocks.Messaging.Outbox;
 using DocFlow.BuildingBlocks.Validation;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ public sealed class DocumentDbContext(DbContextOptions<DocumentDbContext> option
 {
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -17,6 +19,8 @@ public sealed class DocumentDbContext(DbContextOptions<DocumentDbContext> option
         modelBuilder.Entity<DocumentVersion>()
             .HasIndex(x => new { x.DocumentId, x.VersionNumber })
             .IsUnique();
+
+        modelBuilder.AddOutboxModelCreating();
     }
 
     public override int SaveChanges()
