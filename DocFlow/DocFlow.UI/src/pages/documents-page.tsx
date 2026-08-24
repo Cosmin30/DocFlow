@@ -6,33 +6,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, type DocumentItem } from '@/lib/api'
-import { getAccessToken } from '@/lib/auth'
+import { confidentialityLabel, formatDate } from '@/lib/utils'
 import { Search, Upload } from 'lucide-react'
-
-const emptyMessage = 'Nu există documente în baza de date.'
-
-function confidentialityLabel(value: number | string) {
-  const normalized = String(value)
-  if (normalized === '0' || normalized.toLowerCase() === 'public') return 'Public'
-  if (normalized === '1' || normalized.toLowerCase() === 'internal') return 'Intern'
-  if (normalized === '2' || normalized.toLowerCase() === 'confidential') return 'Confidențial'
-  return 'Strict'
-}
 
 export function DocumentsPage() {
   const navigate = useNavigate()
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const load = async () => {
-      if (!getAccessToken()) {
-        setLoading(false)
-        setErrorMessage('Autentifică-te pentru a vedea documentele din backend.')
-        return
-      }
-
       const result = await api.get<DocumentItem[]>('/documents')
       setLoading(false)
 
@@ -45,6 +30,17 @@ export function DocumentsPage() {
 
     void load()
   }, [])
+
+  const filteredDocuments = documents.filter((doc) => {
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      doc.title.toLowerCase().includes(q) ||
+      doc.category.toLowerCase().includes(q) ||
+      doc.department.toLowerCase().includes(q) ||
+      doc.tagsCsv.toLowerCase().includes(q)
+    )
+  })
 
   return (
     <div className="space-y-6">
@@ -67,7 +63,12 @@ export function DocumentsPage() {
         <CardContent className="space-y-4">
           <div className="relative max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Caută documente..." />
+            <Input
+              className="pl-9"
+              placeholder="Caută documente..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
           {errorMessage ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errorMessage}</p> : null}
@@ -80,23 +81,24 @@ export function DocumentsPage() {
                 <TableHead>Departament</TableHead>
                 <TableHead>Clasificare</TableHead>
                 <TableHead>Versiune</TableHead>
+                <TableHead>Data</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                     Se încarcă documentele...
                   </TableCell>
                 </TableRow>
-              ) : documents.length === 0 ? (
+              ) : filteredDocuments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                    {emptyMessage}
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                    {searchQuery ? 'Nu s-au găsit documente pentru această căutare.' : 'Nu există documente în baza de date.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                documents.map((document) => (
+                filteredDocuments.map((document) => (
                   <TableRow key={document.id} className="cursor-pointer" onClick={() => navigate(`/documents/${document.id}`)}>
                     <TableCell className="font-medium">{document.title}</TableCell>
                     <TableCell>{document.category}</TableCell>
@@ -107,6 +109,7 @@ export function DocumentsPage() {
                     <TableCell>
                       <Badge variant="secondary">v{document.currentVersionNumber}</Badge>
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(document.createdAtUtc)}</TableCell>
                   </TableRow>
                 ))
               )}

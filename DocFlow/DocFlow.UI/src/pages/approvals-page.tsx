@@ -5,32 +5,17 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useEffect, useState } from 'react'
 import { api, type ApprovalItem } from '@/lib/api'
-import { getAccessToken } from '@/lib/auth'
-
-const emptyMessage = 'Nu există aprobări în așteptare.'
-
-function approvalStatusLabel(value: number | string) {
-  const normalized = String(value)
-  if (normalized === '0' || normalized.toLowerCase() === 'pending') return 'În așteptare'
-  if (normalized === '1' || normalized.toLowerCase() === 'approved') return 'Aprobat'
-  if (normalized === '2' || normalized.toLowerCase() === 'rejected') return 'Respins'
-  return normalized
-}
+import { approvalStatusLabel, formatDateTime } from '@/lib/utils'
 
 export function ApprovalsPage() {
   const [approvals, setApprovals] = useState<ApprovalItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [pendingActionId, setPendingActionId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('pending')
 
   useEffect(() => {
     const load = async () => {
-      if (!getAccessToken()) {
-        setLoading(false)
-        setErrorMessage('Autentifică-te pentru a vedea aprobările din backend.')
-        return
-      }
-
       const result = await api.get<ApprovalItem[]>('/approvals/pending')
       setLoading(false)
 
@@ -63,6 +48,8 @@ export function ApprovalsPage() {
     setApprovals((current) => current.filter((item) => item.id !== approvalId))
   }
 
+  const filteredApprovals = approvals
+
   return (
     <div className="space-y-6">
       <div>
@@ -76,26 +63,25 @@ export function ApprovalsPage() {
           <CardDescription>Locul unde vezi cererile în așteptare și progresul lor.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger active>Coadă</TabsTrigger>
-              <TabsTrigger>Finalizate</TabsTrigger>
-              <TabsTrigger>Blocate</TabsTrigger>
+              <TabsTrigger value="pending">În așteptare ({filteredApprovals.length})</TabsTrigger>
+              <TabsTrigger value="resolved">Finalizate</TabsTrigger>
             </TabsList>
-            <TabsContent>
+            <TabsContent value="pending">
               {errorMessage ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errorMessage}</p> : null}
               <div className="space-y-4">
                 {loading ? (
                   <p className="text-sm text-muted-foreground">Se încarcă aprobările...</p>
-                ) : approvals.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+                ) : filteredApprovals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nu există aprobări în așteptare.</p>
                 ) : (
-                  approvals.map((item) => (
+                  filteredApprovals.map((item) => (
                     <div key={item.id} className="rounded-lg border p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="font-medium">Document {item.documentId.slice(0, 8)}...</p>
-                          <p className="text-sm text-muted-foreground">Cerut de {item.requestedByUserId.slice(0, 8)}... · {item.createdAtUtc}</p>
+                          <p className="text-sm text-muted-foreground">Cerut de {item.requestedByUserId.slice(0, 8)}... · {formatDateTime(item.createdAtUtc)}</p>
                         </div>
                         <Badge variant={String(item.status) === '1' ? 'outline' : String(item.status) === '2' ? 'secondary' : 'default'}>
                           {approvalStatusLabel(item.status)}
@@ -114,6 +100,9 @@ export function ApprovalsPage() {
                   ))
                 )}
               </div>
+            </TabsContent>
+            <TabsContent value="resolved">
+              <p className="text-sm text-muted-foreground">Aprobările finalizate vor apărea aici.</p>
             </TabsContent>
           </Tabs>
         </CardContent>

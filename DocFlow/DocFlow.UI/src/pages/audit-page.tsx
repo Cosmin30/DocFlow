@@ -3,9 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useEffect, useState } from 'react'
 import { api, type AuditItem } from '@/lib/api'
-import { getAccessToken } from '@/lib/auth'
+import { formatDateTime } from '@/lib/utils'
 
-const emptyMessage = 'Nu există înregistrări de audit.'
+function severityLabel(action: string) {
+  const value = action.toLowerCase()
+  if (value.includes('permission') || value.includes('rol')) return 'Ridicat'
+  if (value.includes('approval') || value.includes('aprobare')) return 'Mediu'
+  return 'Scăzut'
+}
 
 export function AuditPage() {
   const [auditRows, setAuditRows] = useState<AuditItem[]>([])
@@ -14,12 +19,6 @@ export function AuditPage() {
 
   useEffect(() => {
     const load = async () => {
-      if (!getAccessToken()) {
-        setLoading(false)
-        setErrorMessage('Autentifică-te pentru a vedea auditul din backend.')
-        return
-      }
-
       const result = await api.get<AuditItem[]>('/audit?take=20')
       setLoading(false)
 
@@ -32,13 +31,6 @@ export function AuditPage() {
 
     void load()
   }, [])
-
-  function severityLabel(action: string) {
-    const value = action.toLowerCase()
-    if (value.includes('permission') || value.includes('rol')) return 'Ridicat'
-    if (value.includes('approval') || value.includes('aprobare')) return 'Mediu'
-    return 'Scăzut'
-  }
 
   return (
     <div className="space-y-6">
@@ -74,7 +66,7 @@ export function AuditPage() {
               ) : auditRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                    {emptyMessage}
+                    Nu există înregistrări de audit.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -82,8 +74,8 @@ export function AuditPage() {
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{row.action}</TableCell>
                   <TableCell>{row.entityType}</TableCell>
-                  <TableCell>{row.userId ?? 'Anonim'}</TableCell>
-                  <TableCell>{row.createdAtUtc}</TableCell>
+                  <TableCell>{row.userId ? row.userId.slice(0, 8) + '...' : 'Anonim'}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDateTime(row.createdAtUtc)}</TableCell>
                   <TableCell>
                     <Badge variant={severityLabel(row.action) === 'Ridicat' ? 'default' : severityLabel(row.action) === 'Mediu' ? 'secondary' : 'outline'}>
                       {severityLabel(row.action)}

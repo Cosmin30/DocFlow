@@ -7,16 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api, type ApprovalItem, type DocumentItem, type DocumentVersionItem } from '@/lib/api'
-
-const seededManagerUserId = '33333333-3333-3333-3333-333333333333'
-
-function confidentialityLabel(value: number | string) {
-  const normalized = String(value)
-  if (normalized === '0' || normalized.toLowerCase() === 'public') return 'Public'
-  if (normalized === '1' || normalized.toLowerCase() === 'internal') return 'Intern'
-  if (normalized === '2' || normalized.toLowerCase() === 'confidential') return 'Confidențial'
-  return 'Strict'
-}
+import { confidentialityLabel, formatBytes, formatDateTime } from '@/lib/utils'
 
 export function DocumentDetailPage() {
   const navigate = useNavigate()
@@ -25,7 +16,7 @@ export function DocumentDetailPage() {
   const [versions, setVersions] = useState<DocumentVersionItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [approvalTargetUserId, setApprovalTargetUserId] = useState(seededManagerUserId)
+  const [approvalTargetUserId, setApprovalTargetUserId] = useState('')
   const [approvalComment, setApprovalComment] = useState('')
   const [approvalSaving, setApprovalSaving] = useState(false)
   const [approvalMessage, setApprovalMessage] = useState<string | null>(null)
@@ -61,8 +52,8 @@ export function DocumentDetailPage() {
   }, [documentId])
 
   const createApproval = async () => {
-    if (!documentId) {
-      setApprovalMessage('Lipsește identificatorul documentului.')
+    if (!documentId || !approvalTargetUserId.trim()) {
+      setApprovalMessage('Completează ID-ul utilizatorului.')
       return
     }
 
@@ -71,7 +62,7 @@ export function DocumentDetailPage() {
 
     const result = await api.post<ApprovalItem>('/approvals', {
       documentId,
-      assignedToUserId: approvalTargetUserId,
+      assignedToUserId: approvalTargetUserId.trim(),
       comment: approvalComment.trim() || null,
     })
 
@@ -126,12 +117,17 @@ export function DocumentDetailPage() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span>Expirare</span>
-                  <span className="text-muted-foreground">{documentItem.expiresAtUtc ?? 'Nu expiră'}</span>
+                  <span className="text-muted-foreground">{formatDateTime(documentItem.expiresAtUtc)}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span>Versiune curentă</span>
                   <Badge>{documentItem.currentVersionNumber}</Badge>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span>Creat la</span>
+                  <span className="text-muted-foreground">{formatDateTime(documentItem.createdAtUtc)}</span>
                 </div>
               </>
             ) : (
@@ -152,12 +148,13 @@ export function DocumentDetailPage() {
                   <TableHead>Versiune</TableHead>
                   <TableHead>Fișier</TableHead>
                   <TableHead>Dimensiune</TableHead>
+                  <TableHead>Data</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {versions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
                       Nu există versiuni încă.
                     </TableCell>
                   </TableRow>
@@ -166,7 +163,8 @@ export function DocumentDetailPage() {
                     <TableRow key={version.id}>
                       <TableCell>v{version.versionNumber}</TableCell>
                       <TableCell>{version.fileName}</TableCell>
-                      <TableCell>{version.sizeBytes.toLocaleString('ro-RO')} bytes</TableCell>
+                      <TableCell>{formatBytes(version.sizeBytes)}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDateTime(version.createdAtUtc)}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -183,7 +181,7 @@ export function DocumentDetailPage() {
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="assignedToUserId">Atribuit către user ID</label>
-              <Input id="assignedToUserId" value={approvalTargetUserId} onChange={(event) => setApprovalTargetUserId(event.target.value)} />
+              <Input id="assignedToUserId" value={approvalTargetUserId} onChange={(event) => setApprovalTargetUserId(event.target.value)} placeholder="Introdu UUID-ul utilizatorului" />
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-medium" htmlFor="approvalComment">Comentariu</label>
@@ -191,11 +189,8 @@ export function DocumentDetailPage() {
             </div>
             {approvalMessage ? <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground md:col-span-2">{approvalMessage}</p> : null}
             <div className="flex gap-3 md:col-span-2">
-              <Button type="button" onClick={() => void createApproval()} disabled={approvalSaving || !documentId}>
+              <Button type="button" onClick={() => void createApproval()} disabled={approvalSaving || !documentId || !approvalTargetUserId.trim()}>
                 {approvalSaving ? 'Se creează...' : 'Creează aprobare'}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setApprovalTargetUserId(seededManagerUserId)}>
-                Reset target
               </Button>
             </div>
           </CardContent>

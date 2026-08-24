@@ -1,10 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { Activity, FileText, LayoutDashboard, LogIn, ScrollText, ShieldCheck, Workflow } from 'lucide-react'
+import { Activity, FileText, LayoutDashboard, LogOut, ScrollText, ShieldCheck, Workflow } from 'lucide-react'
 import { logout } from '@/lib/auth'
 
 const navigationItems = [
@@ -15,6 +15,8 @@ const navigationItems = [
 ]
 
 export function AppShell() {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 p-4 lg:grid-cols-[280px_1fr] lg:p-6">
@@ -56,16 +58,8 @@ export function AppShell() {
           <Card>
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">System</span>
-                <Badge variant="outline">Disponibil</Badge>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Cereri/min</span>
-                <span className="font-medium">128/min</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Alerte</span>
-                <Badge>2 active</Badge>
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant="outline">Activ</Badge>
               </div>
             </CardContent>
           </Card>
@@ -75,11 +69,11 @@ export function AppShell() {
             className="mt-auto justify-start gap-2"
             onClick={async () => {
               await logout()
-              window.location.href = '/login'
+              navigate('/login')
             }}
           >
-            <LogIn className="h-4 w-4" />
-            <span>Conectare</span>
+            <LogOut className="h-4 w-4" />
+            <span>Deconectare</span>
           </Button>
         </aside>
 

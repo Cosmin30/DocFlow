@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/app-shell'
+import { ProtectedRoute } from '@/components/protected-route'
 import { DashboardPage } from '@/pages/dashboard-page'
 import { LoginPage } from '@/pages/login-page'
 import { RegisterPage } from '@/pages/register-page'
@@ -15,15 +16,17 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route element={<AppShell />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/documents" element={<DocumentsPage />} />
-        <Route path="/documents/new" element={<DocumentCreatePage />} />
-        <Route path="/documents/:documentId" element={<DocumentDetailPage />} />
-        <Route path="/documents/:documentId/edit" element={<DocumentEditPage />} />
-        <Route path="/approvals" element={<ApprovalsPage />} />
-        <Route path="/audit" element={<AuditPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppShell />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/documents/new" element={<DocumentCreatePage />} />
+          <Route path="/documents/:documentId" element={<DocumentDetailPage />} />
+          <Route path="/documents/:documentId/edit" element={<DocumentEditPage />} />
+          <Route path="/approvals" element={<ApprovalsPage />} />
+          <Route path="/audit" element={<AuditPage />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

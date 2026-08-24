@@ -14,13 +14,43 @@ type ProblemDetails = {
   errors?: Record<string, string[] | string>
 }
 
+let refreshPromise: Promise<boolean> | null = null
+
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) return false
+
+  try {
+    const refreshed = await fetch('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    if (!refreshed.ok) return false
+
+    const refreshedText = await refreshed.text()
+    const parsed = parseResponseText<LoginResponse>(refreshedText)
+
+    if (parsed.data) {
+      setSessionTokens(parsed.data.accessToken, parsed.data.refreshToken)
+      return true
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}
+
 function parseResponseText<T>(text: string): { data: T | null; raw: unknown | null } {
   if (!text.trim()) {
     return { data: null, raw: null }
   }
 
   try {
-    return { data: JSON.parse(text) as T, raw: JSON.parse(text) }
+    const parsed = JSON.parse(text)
+    return { data: parsed as T, raw: parsed }
   } catch {
     return { data: null, raw: text }
   }
@@ -36,23 +66,13 @@ function extractErrorMessage(raw: unknown, fallback: string): string {
   }
 
   const problem = raw as ProblemDetails
-  if (problem.detail) {
-    return problem.detail
-  }
-
-  if (problem.title) {
-    return problem.title
-  }
-
-  if (problem.message) {
-    return problem.message
-  }
+  if (problem.detail) return problem.detail
+  if (problem.title) return problem.title
+  if (problem.message) return problem.message
 
   if (problem.errors && typeof problem.errors === 'object') {
     const firstError = Object.values(problem.errors).flat().find((value) => Boolean(String(value).trim()))
-    if (firstError) {
-      return String(firstError)
-    }
+    if (firstError) return String(firstError)
   }
 
   return fallback
@@ -71,61 +91,50 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
   }
 
   try {
-    const response = await fetch(path, {
-      ...init,
-      headers,
-    })
-
+    const response = await fetch(path, { ...init, headers })
     const text = await response.text()
     const parsed = parseResponseText<T>(text)
-    const data = parsed.data
 
     if (response.status === 401 && path !== '/auth/login' && path !== '/auth/refresh') {
-      const refreshToken = getRefreshToken()
-      if (refreshToken) {
-        const refreshed = await fetch('/auth/refresh', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refreshToken }),
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null
         })
+      }
 
-        if (refreshed.ok) {
-          const refreshedText = await refreshed.text()
-          const refreshedParsed = parseResponseText<LoginResponse>(refreshedText)
-          const refreshedData = refreshedParsed.data
+      const refreshed = await refreshPromise
 
-          if (refreshedData) {
-            setSessionTokens(refreshedData.accessToken, refreshedData.refreshToken)
+      if (refreshed) {
+        const newToken = getAccessToken()
+        if (newToken) {
+          const retryHeaders = new Headers(init.headers)
+          retryHeaders.set('Authorization', `Bearer ${newToken}`)
+          if (!retryHeaders.has('Content-Type') && init.body) {
+            retryHeaders.set('Content-Type', 'application/json')
+          }
 
-            const retryHeaders = new Headers(init.headers)
-            retryHeaders.set('Authorization', `Bearer ${refreshedData.accessToken}`)
-            if (!retryHeaders.has('Content-Type') && init.body) {
-              retryHeaders.set('Content-Type', 'application/json')
-            }
+          const retryResponse = await fetch(path, { ...init, headers: retryHeaders })
+          const retryText = await retryResponse.text()
+          const retryParsed = parseResponseText<T>(retryText)
 
-            const retryResponse = await fetch(path, {
-              ...init,
-              headers: retryHeaders,
-            })
+          if (retryResponse.ok) {
+            return { ok: true, status: retryResponse.status, data: retryParsed.data }
+          }
 
-            const retryText = await retryResponse.text()
-            const retryParsed = parseResponseText<T>(retryText)
-            const retryData = retryParsed.data
-
-            if (retryResponse.ok) {
-              return { ok: true, status: retryResponse.status, data: retryData }
-            }
-
-            return {
-              ok: false,
-              status: retryResponse.status,
-              data: retryData,
-              error: extractErrorMessage(retryParsed.raw, retryResponse.statusText || 'A apărut o eroare la server.'),
-            }
+          return {
+            ok: false,
+            status: retryResponse.status,
+            data: retryParsed.data,
+            error: extractErrorMessage(retryParsed.raw, retryResponse.statusText || 'A apărut o eroare la server.'),
           }
         }
+      }
+
+      return {
+        ok: false,
+        status: 401,
+        data: null,
+        error: 'Sesiunea a expirat. Autentifică-te din nou.',
       }
     }
 
@@ -133,12 +142,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
       return {
         ok: false,
         status: response.status,
-        data,
+        data: parsed.data,
         error: extractErrorMessage(parsed.raw, response.statusText || 'A apărut o eroare la server.'),
       }
     }
 
-    return { ok: true, status: response.status, data }
+    return { ok: true, status: response.status, data: parsed.data }
   } catch (error) {
     return {
       ok: false,

@@ -10,9 +10,9 @@ import { setSessionTokens } from '@/lib/auth'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [tenantSlug, setTenantSlug] = useState('contabilitate')
-  const [email, setEmail] = useState('admin@docflow.ro')
-  const [password, setPassword] = useState('DocFlow123!')
+  const [tenantSlug, setTenantSlug] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [device, setDevice] = useState('Browser local')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
