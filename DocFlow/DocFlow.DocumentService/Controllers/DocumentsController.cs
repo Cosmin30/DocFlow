@@ -5,7 +5,7 @@ using DocFlow.DocumentService.Application.CQRS.Documents.Commands.UpdateDocument
 using DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocumentVersions;
 using DocFlow.DocumentService.Application.CQRS.Documents.Queries.GetDocuments;
 using DocFlow.DocumentService.Application.Contracts;
-using DocFlow.DocumentService.Domain.Entities;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +42,10 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
 
             return CreatedAtAction(nameof(GetVersions), new { id = document.Id }, document);
         }
+        catch (ValidationException ex)
+        {
+            return ValidationProblem(ex.Errors.Select(e => new Microsoft.AspNetCore.Mvc.ModelStateModelError(e.PropertyName, e.ErrorMessage)).ToArray());
+        }
         catch (Exception ex)
         {
             return Problem(ex.Message, statusCode: 500);
@@ -58,6 +62,10 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
                 cancellationToken);
 
             return document is null ? NotFound() : Ok(document);
+        }
+        catch (ValidationException ex)
+        {
+            return ValidationProblem(ex.Errors.Select(e => new Microsoft.AspNetCore.Mvc.ModelStateModelError(e.PropertyName, e.ErrorMessage)).ToArray());
         }
         catch (Exception ex)
         {

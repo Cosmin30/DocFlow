@@ -2,8 +2,11 @@ using DocFlow.BuildingBlocks.Security;
 using DocFlow.BuildingBlocks.Messaging;
 using DocFlow.BuildingBlocks.Messaging.Outbox;
 using DocFlow.DocumentService.Application.Abstractions;
+using DocFlow.DocumentService.Application.Behaviors;
 using DocFlow.DocumentService.Infrastructure.Persistence;
 using DocFlow.DocumentService.Infrastructure.Repositories;
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -28,6 +31,9 @@ builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
