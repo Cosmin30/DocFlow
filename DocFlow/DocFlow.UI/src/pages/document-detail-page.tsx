@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -25,7 +25,7 @@ export function DocumentDetailPage() {
     const load = async () => {
       if (!documentId) {
         setLoading(false)
-        setErrorMessage('Lipsește identificatorul documentului.')
+        setErrorMessage('Missing document identifier.')
         return
       }
 
@@ -42,9 +42,9 @@ export function DocumentDetailPage() {
       }
 
       if (!documentsResult.ok) {
-        setErrorMessage(documentsResult.error ?? 'Nu am putut încărca documentul.')
+        setErrorMessage(documentsResult.error ?? 'Failed to load document.')
       } else if (documentId && !documentsResult.data?.some((item) => item.id === documentId)) {
-        setErrorMessage('Documentul nu există sau nu ai acces la el.')
+        setErrorMessage('Document not found or you do not have access.')
       }
     }
 
@@ -53,7 +53,7 @@ export function DocumentDetailPage() {
 
   const createApproval = async () => {
     if (!documentId || !approvalTargetUserId.trim()) {
-      setApprovalMessage('Completează ID-ul utilizatorului.')
+      setApprovalMessage('Please enter the assignee user ID.')
       return
     }
 
@@ -69,24 +69,23 @@ export function DocumentDetailPage() {
     setApprovalSaving(false)
 
     if (!result.ok || !result.data) {
-      setApprovalMessage(result.error ?? 'Nu am putut crea aprobarea.')
+      setApprovalMessage(result.error ?? 'Failed to create approval.')
       return
     }
 
     setApprovalComment('')
-    setApprovalMessage('Cererea de aprobare a fost creată.')
+    setApprovalMessage('Approval request created successfully.')
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-2xl font-semibold tracking-tight">Detalii document</h3>
-          <p className="text-sm text-muted-foreground">Informații complete și versiuni pentru documentul selectat.</p>
+          <h3 className="text-2xl font-semibold tracking-tight">Document details</h3>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/documents')}>Înapoi la listă</Button>
-          {documentId ? <Button onClick={() => navigate(`/documents/${documentId}/edit`)}>Editează</Button> : null}
+          <Button variant="outline" onClick={() => navigate('/documents')}>Back to list</Button>
+          {documentId ? <Button onClick={() => navigate(`/documents/${documentId}/edit`)}>Edit</Button> : null}
         </div>
       </div>
 
@@ -95,67 +94,68 @@ export function DocumentDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>{documentItem ? documentItem.title : 'Document indisponibil'}</CardTitle>
-            <CardDescription>
-              {documentItem ? `${documentItem.category} · ${documentItem.department}` : 'Nu există date pentru acest document.'}
-            </CardDescription>
+            <CardTitle>{documentItem ? documentItem.title : 'Document not available'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {loading ? (
-              <p className="text-muted-foreground">Se încarcă detaliile...</p>
+              <p className="text-muted-foreground">Loading...</p>
             ) : documentItem ? (
               <>
                 <div className="flex items-center justify-between">
-                  <span>Clasificare</span>
+                  <span className="text-muted-foreground">Category</span>
+                  <span>{documentItem.category} · {documentItem.department}</span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Classification</span>
                   <Badge variant="outline">{confidentialityLabel(documentItem.confidentialityLevel)}</Badge>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span>Etichete</span>
-                  <span className="text-muted-foreground">{documentItem.tagsCsv || 'Fără etichete'}</span>
+                  <span className="text-muted-foreground">Tags</span>
+                  <span>{documentItem.tagsCsv || '—'}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span>Expirare</span>
-                  <span className="text-muted-foreground">{formatDateTime(documentItem.expiresAtUtc)}</span>
+                  <span className="text-muted-foreground">Expires</span>
+                  <span>{formatDateTime(documentItem.expiresAtUtc)}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span>Versiune curentă</span>
+                  <span className="text-muted-foreground">Current version</span>
                   <Badge>{documentItem.currentVersionNumber}</Badge>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span>Creat la</span>
-                  <span className="text-muted-foreground">{formatDateTime(documentItem.createdAtUtc)}</span>
+                  <span className="text-muted-foreground">Created</span>
+                  <span>{formatDateTime(documentItem.createdAtUtc)}</span>
                 </div>
               </>
             ) : (
-              <p className="text-muted-foreground">Nu există date suficiente pentru acest document.</p>
+              <p className="text-muted-foreground">No data available.</p>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Versiuni</CardTitle>
-            <CardDescription>Istoricul fișierelor încărcate pentru document.</CardDescription>
+            <CardTitle>Versions</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Versiune</TableHead>
-                  <TableHead>Fișier</TableHead>
-                  <TableHead>Dimensiune</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>File</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {versions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                      Nu există versiuni încă.
+                      No versions yet.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -175,22 +175,21 @@ export function DocumentDetailPage() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Creează aprobare</CardTitle>
-            <CardDescription>Trimite documentul către un utilizator pentru aprobare din backend.</CardDescription>
+            <CardTitle>Create approval</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="assignedToUserId">Atribuit către user ID</label>
-              <Input id="assignedToUserId" value={approvalTargetUserId} onChange={(event) => setApprovalTargetUserId(event.target.value)} placeholder="Introdu UUID-ul utilizatorului" />
+              <label className="text-sm font-medium" htmlFor="assignedToUserId">Assignee user ID</label>
+              <Input id="assignedToUserId" value={approvalTargetUserId} onChange={(event) => setApprovalTargetUserId(event.target.value)} placeholder="Enter user UUID" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium" htmlFor="approvalComment">Comentariu</label>
-              <Input id="approvalComment" value={approvalComment} onChange={(event) => setApprovalComment(event.target.value)} placeholder="De ce are nevoie de aprobare" />
+              <label className="text-sm font-medium" htmlFor="approvalComment">Comment</label>
+              <Input id="approvalComment" value={approvalComment} onChange={(event) => setApprovalComment(event.target.value)} placeholder="Optional comment" />
             </div>
             {approvalMessage ? <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground md:col-span-2">{approvalMessage}</p> : null}
             <div className="flex gap-3 md:col-span-2">
               <Button type="button" onClick={() => void createApproval()} disabled={approvalSaving || !documentId || !approvalTargetUserId.trim()}>
-                {approvalSaving ? 'Se creează...' : 'Creează aprobare'}
+                {approvalSaving ? 'Creating...' : 'Create approval'}
               </Button>
             </div>
           </CardContent>

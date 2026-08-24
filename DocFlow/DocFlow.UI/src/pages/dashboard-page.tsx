@@ -8,8 +8,6 @@ import { useNavigate } from 'react-router-dom'
 import { api, type ApprovalItem, type AuditItem, type DocumentItem } from '@/lib/api'
 import { formatDateTime } from '@/lib/utils'
 
-const emptyMessage = 'Nu există date încă în baza de date.'
-
 export function DashboardPage() {
   const navigate = useNavigate()
   const [documents, setDocuments] = useState<DocumentItem[]>([])
@@ -42,7 +40,7 @@ export function DashboardPage() {
 
       const firstError = [documentsResult, approvalsResult, auditResult].find((result) => !result.ok)
       if (firstError) {
-        setErrorMessage(firstError.error ?? 'Nu am putut încărca datele din backend.')
+        setErrorMessage(firstError.error ?? 'Failed to load data.')
       }
     }
 
@@ -51,9 +49,9 @@ export function DashboardPage() {
 
   const summary = useMemo(
     () => [
-      { label: 'Documente', value: documents.length.toString(), icon: FileText },
-      { label: 'Aprobări', value: approvals.length.toString(), icon: Workflow },
-      { label: 'Înregistrări audit', value: auditLogs.length.toString(), icon: Activity },
+      { label: 'Documents', value: documents.length.toString(), icon: FileText },
+      { label: 'Pending approvals', value: approvals.length.toString(), icon: Workflow },
+      { label: 'Audit entries', value: auditLogs.length.toString(), icon: Activity },
     ],
     [documents.length, approvals.length, auditLogs.length],
   )
@@ -66,13 +64,13 @@ export function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-2xl font-semibold tracking-tight">Panou principal</h3>
-          <p className="text-sm text-muted-foreground">Prezentare rapidă a datelor venite din backend.</p>
+          <h3 className="text-2xl font-semibold tracking-tight">Dashboard</h3>
+          <p className="text-sm text-muted-foreground">Overview of your workspace.</p>
         </div>
-        <Button variant="secondary" onClick={() => navigate('/documents/new')}>Creează document</Button>
+        <Button variant="secondary" onClick={() => navigate('/documents/new')}>New document</Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         {summary.map((item) => {
           const Icon = item.icon
           return (
@@ -91,84 +89,54 @@ export function DashboardPage() {
 
       {errorMessage ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errorMessage}</p> : null}
 
-      <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ultimele documente</CardTitle>
-            <CardDescription>Date din backend sau stare goală dacă baza nu are înregistrări.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            {loading ? (
-              <p className="text-muted-foreground">Se încarcă datele...</p>
-            ) : latestDocument ? (
-              <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent activity</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          {loading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : !latestDocument && !latestApproval && !latestAudit ? (
+            <p className="text-muted-foreground">No data yet. Create a document or register an approval to get started.</p>
+          ) : (
+            <>
+              {latestDocument && (
+                <>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium">{latestDocument.title}</p>
+                      <p className="text-muted-foreground">{latestDocument.category} · {latestDocument.department}</p>
+                    </div>
+                    <Badge variant="outline">v{latestDocument.currentVersionNumber}</Badge>
+                  </div>
+                  <Separator />
+                </>
+              )}
+              {latestApproval && (
+                <>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium">Approval for document {latestApproval.documentId.slice(0, 8)}...</p>
+                      <p className="text-muted-foreground">{formatDateTime(latestApproval.createdAtUtc)}</p>
+                    </div>
+                    <Badge variant="secondary">{String(latestApproval.status)}</Badge>
+                  </div>
+                  <Separator />
+                </>
+              )}
+              {latestAudit && (
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-medium">{latestDocument.title}</p>
-                    <p className="text-muted-foreground">{latestDocument.category} · {latestDocument.department}</p>
+                    <p className="font-medium">{latestAudit.action}</p>
+                    <p className="text-muted-foreground">{formatDateTime(latestAudit.createdAtUtc)}</p>
                   </div>
-                  <Badge variant="outline">Versiunea {latestDocument.currentVersionNumber}</Badge>
+                  <Badge variant="outline">{latestAudit.entityType}</Badge>
                 </div>
-                <Separator />
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium">{latestApproval ? `Aprobare pentru documentul ${latestApproval.documentId.slice(0, 8)}...` : 'Nu există aprobări încă'}</p>
-                    <p className="text-muted-foreground">{latestApproval ? formatDateTime(latestApproval.createdAtUtc) : emptyMessage}</p>
-                  </div>
-                  <Badge variant="secondary">{latestApproval ? String(latestApproval.status) : 'Fără date'}</Badge>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium">{latestAudit ? latestAudit.action : 'Nu există înregistrări de audit'}</p>
-                    <p className="text-muted-foreground">{latestAudit ? formatDateTime(latestAudit.createdAtUtc) : emptyMessage}</p>
-                  </div>
-                  <Badge variant="outline">Audit</Badge>
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground">{emptyMessage}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Acțiuni următoare</CardTitle>
-              <CardDescription>Ce poți face imediat în funcție de datele încărcate.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p>• Verifică aprobările urgente</p>
-              <p>• Încarcă documentele lipsă</p>
-              <p>• Rezolvă observațiile de audit</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Starea serviciilor</CardTitle>
-              <CardDescription>Indicatori simpli pentru backend-ul din development.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span>Gateway</span>
-                <Badge variant="outline">Disponibil</Badge>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span>Auth</span>
-                <Badge variant="outline">Disponibil</Badge>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span>Database</span>
-                <Badge>Poate fi goală</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

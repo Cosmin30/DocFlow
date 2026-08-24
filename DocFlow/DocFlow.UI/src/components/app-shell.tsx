@@ -1,16 +1,14 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { Activity, FileText, LayoutDashboard, LogOut, ScrollText, ShieldCheck, Workflow } from 'lucide-react'
+import { FileText, LayoutDashboard, LogOut, ScrollText, ShieldCheck, Workflow } from 'lucide-react'
 import { logout } from '@/lib/auth'
 
 const navigationItems = [
-  { to: '/dashboard', label: 'Panou', icon: LayoutDashboard },
-  { to: '/documents', label: 'Documente', icon: FileText },
-  { to: '/approvals', label: 'Aprobări', icon: Workflow },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/documents', label: 'Documents', icon: FileText },
+  { to: '/approvals', label: 'Approvals', icon: Workflow },
   { to: '/audit', label: 'Audit', icon: ScrollText },
 ]
 
@@ -19,15 +17,13 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 p-4 lg:grid-cols-[280px_1fr] lg:p-6">
+      <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 p-4 lg:grid-cols-[260px_1fr] lg:p-6">
         <aside className="flex flex-col gap-4 rounded-2xl border bg-card p-4 shadow-sm">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm font-semibold">
               <ShieldCheck className="h-4 w-4" />
-              DocFlow.UI
+              DocFlow
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight">Suita de lucru</h1>
-            <p className="text-sm text-muted-foreground">Documente, aprobări și audit într-un singur loc.</p>
           </div>
 
           <Separator />
@@ -53,17 +49,6 @@ export function AppShell() {
             })}
           </nav>
 
-          <Separator />
-
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Status</span>
-                <Badge variant="outline">Activ</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
           <Button
             variant="secondary"
             className="mt-auto justify-start gap-2"
@@ -73,22 +58,11 @@ export function AppShell() {
             }}
           >
             <LogOut className="h-4 w-4" />
-            <span>Deconectare</span>
+            <span>Sign out</span>
           </Button>
         </aside>
 
         <section className="flex flex-col gap-6">
-          <header className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Frontend DocFlow</p>
-              <h2 className="text-xl font-semibold tracking-tight">Vedere operațională</h2>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Activity className="h-4 w-4" />
-              Date în timp real
-            </div>
-          </header>
-
           <div className="flex-1 rounded-2xl border bg-card p-4 shadow-sm lg:p-6">
             <Outlet />
           </div>

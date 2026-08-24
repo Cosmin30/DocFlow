@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 
 const roleOptions = [
-  { label: 'Company admin', value: 1 },
+  { label: 'Admin', value: 1 },
   { label: 'Manager', value: 2 },
   { label: 'Employee', value: 3 },
-  { label: 'Read-only auditor', value: 4 },
+  { label: 'Auditor (read-only)', value: 4 },
 ] as const
 
 export function RegisterPage() {
@@ -26,114 +25,104 @@ export function RegisterPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 p-6 lg:grid-cols-[0.95fr_1.05fr] lg:p-10">
-        <Card className="flex items-center">
-          <CardContent className="w-full space-y-6 p-8">
-            <CardHeader className="p-0">
-              <Badge>Cont nou</Badge>
-              <CardTitle className="text-3xl">Creează un spațiu de lucru</CardTitle>
-              <CardDescription>
-                Înregistrează tenantul și primul utilizator pentru a putea intra în DocFlow.
-              </CardDescription>
-            </CardHeader>
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center p-6">
+        <div className="w-full space-y-8">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
+            <p className="text-sm text-muted-foreground">Set up your tenant and first user to get started.</p>
+          </div>
 
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <p>• Creezi tenantul și utilizatorul inițial dintr-un singur formular.</p>
-              <p>• Poți folosi imediat datele pentru login după înregistrare.</p>
-              <p>• Rolul ales este trimis direct către backend.</p>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardContent className="p-6">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-lg">Registration</CardTitle>
+              </CardHeader>
 
-        <Card className="flex items-center">
-          <CardContent className="w-full space-y-6 p-8">
-            <CardHeader className="p-0">
-              <CardTitle>Înregistrare</CardTitle>
-              <CardDescription>Completează datele pentru tenant și utilizator.</CardDescription>
-            </CardHeader>
+              <form
+                className="space-y-4"
+                onSubmit={async (event) => {
+                  event.preventDefault()
+                  setErrorMessage(null)
+                  setIsSubmitting(true)
 
-            <form
-              className="space-y-4"
-              onSubmit={async (event) => {
-                event.preventDefault()
-                setErrorMessage(null)
-                setIsSubmitting(true)
+                  const result = await api.post<{ message: string }>('/auth/register', {
+                    tenantName,
+                    tenantSlug,
+                    fullName,
+                    email,
+                    password,
+                    role,
+                  })
 
-                const result = await api.post<{ message: string }>('/auth/register', {
-                  tenantName,
-                  tenantSlug,
-                  fullName,
-                  email,
-                  password,
-                  role,
-                })
+                  setIsSubmitting(false)
 
-                setIsSubmitting(false)
+                  if (!result.ok) {
+                    setErrorMessage(result.error ?? 'Registration failed.')
+                    return
+                  }
 
-                if (!result.ok) {
-                  setErrorMessage(result.error ?? 'Înregistrarea nu a reușit.')
-                  return
-                }
+                  navigate('/login', { replace: true })
+                }}
+              >
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="tenantName">Tenant name</label>
+                  <Input id="tenantName" value={tenantName} onChange={(event) => setTenantName(event.target.value)} placeholder="Acme Corp" />
+                </div>
 
-                navigate('/login', { replace: true })
-              }}
-            >
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="tenantName">Nume tenant</label>
-                <Input id="tenantName" value={tenantName} onChange={(event) => setTenantName(event.target.value)} placeholder="Contabilitate SRL" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="tenantSlug">Tenant slug</label>
+                  <Input id="tenantSlug" value={tenantSlug} onChange={(event) => setTenantSlug(event.target.value)} placeholder="acme" />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="fullName">Full name</label>
+                  <Input id="fullName" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="John Doe" />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="email">Email</label>
+                  <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="password">Password</label>
+                  <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="role">Role</label>
+                  <select
+                    id="role"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={role}
+                    onChange={(event) => setRole(Number(event.target.value))}
+                  >
+                    {roleOptions.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {errorMessage ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errorMessage}</p> : null}
+
+                <Button className="w-full" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating account...' : 'Create account'}
+                </Button>
+              </form>
+
+              <div className="mt-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Already have an account?{' '}
+                  <button type="button" className="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground" onClick={() => navigate('/login')}>
+                    Sign in
+                  </button>
+                </p>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="tenantSlug">Slug tenant</label>
-                <Input id="tenantSlug" value={tenantSlug} onChange={(event) => setTenantSlug(event.target.value)} placeholder="contabilitate" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="fullName">Nume complet</label>
-                <Input id="fullName" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Nume Prenume" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="email">E-mail</label>
-                <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nume@companie.ro" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="password">Parolă</label>
-                <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="role">Rol</label>
-                <select
-                  id="role"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                  value={role}
-                  onChange={(event) => setRole(Number(event.target.value))}
-                >
-                  {roleOptions.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {errorMessage ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errorMessage}</p> : null}
-
-              <Button className="w-full" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Se creează contul...' : 'Creează cont'}
-              </Button>
-            </form>
-
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Ai deja cont?</p>
-              <Button type="button" variant="outline" className="w-full" onClick={() => navigate('/login')}>
-                Înapoi la login
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </main>
   )

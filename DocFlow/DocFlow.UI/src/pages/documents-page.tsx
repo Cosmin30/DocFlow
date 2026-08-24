@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useEffect, useState } from 'react'
@@ -24,7 +24,7 @@ export function DocumentsPage() {
       if (result.ok && result.data) {
         setDocuments(result.data)
       } else {
-        setErrorMessage(result.error ?? 'Nu am putut încărca documentele.')
+        setErrorMessage(result.error ?? 'Failed to load documents.')
       }
     }
 
@@ -46,26 +46,22 @@ export function DocumentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-2xl font-semibold tracking-tight">Documente</h3>
-          <p className="text-sm text-muted-foreground">Răsfoiește, caută și încarcă documente din backend.</p>
+          <h3 className="text-2xl font-semibold tracking-tight">Documents</h3>
+          <p className="text-sm text-muted-foreground">Browse and manage your documents.</p>
         </div>
         <Button className="gap-2" onClick={() => navigate('/documents/new')}>
           <Upload className="h-4 w-4" />
-          Încarcă document
+          Upload document
         </Button>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Bibliotecă</CardTitle>
-          <CardDescription>Filtrează după titlu, categorie sau departament.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="pt-6 space-y-4">
           <div className="relative max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
-              placeholder="Caută documente..."
+              placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -76,25 +72,25 @@ export function DocumentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Titlu</TableHead>
-                <TableHead>Categorie</TableHead>
-                <TableHead>Departament</TableHead>
-                <TableHead>Clasificare</TableHead>
-                <TableHead>Versiune</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Classification</TableHead>
+                <TableHead>Version</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    Se încarcă documentele...
+                    Loading documents...
                   </TableCell>
                 </TableRow>
               ) : filteredDocuments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    {searchQuery ? 'Nu s-au găsit documente pentru această căutare.' : 'Nu există documente în baza de date.'}
+                    {searchQuery ? 'No documents match your search.' : 'No documents found.'}
                   </TableCell>
                 </TableRow>
               ) : (

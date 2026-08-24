@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { api, type DocumentItem } from '@/lib/api'
 
@@ -36,16 +36,12 @@ export function DocumentCreatePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-semibold tracking-tight">Document nou</h3>
-        <p className="text-sm text-muted-foreground">Creează un document nou în backend.</p>
+        <h3 className="text-2xl font-semibold tracking-tight">New document</h3>
+        <p className="text-sm text-muted-foreground">Create a new document in the system.</p>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Detalii document</CardTitle>
-          <CardDescription>Completează câmpurile cerute de API.</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form
             className="grid gap-4 md:grid-cols-2"
             onSubmit={async (event) => {
@@ -63,7 +59,7 @@ export function DocumentCreatePage() {
               setSaving(false)
 
               if (!response.ok || !response.data) {
-                setErrorMessage(response.error ?? 'Documentul nu a putut fi creat.')
+                setErrorMessage(response.error ?? 'Failed to create document.')
                 return
               }
 
@@ -71,12 +67,12 @@ export function DocumentCreatePage() {
             }}
           >
             {[
-              ['title', 'Titlu'],
-              ['category', 'Categorie'],
-              ['department', 'Departament'],
-              ['tagsCsv', 'Etichete (CSV)'],
-              ['fileName', 'Nume fișier'],
-              ['storagePath', 'Cale stocare'],
+              ['title', 'Title'],
+              ['category', 'Category'],
+              ['department', 'Department'],
+              ['tagsCsv', 'Tags (CSV)'],
+              ['fileName', 'File name'],
+              ['storagePath', 'Storage path'],
             ].map(([key, label]) => (
               <div className="space-y-2" key={key}>
                 <label className="text-sm font-medium" htmlFor={key}>
@@ -91,7 +87,7 @@ export function DocumentCreatePage() {
             ))}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="confidentialityLevel">Clasificare</label>
+              <label className="text-sm font-medium" htmlFor="confidentialityLevel">Classification</label>
               <Input
                 id="confidentialityLevel"
                 type="number"
@@ -103,7 +99,7 @@ export function DocumentCreatePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="expiresAtUtc">Expirare</label>
+              <label className="text-sm font-medium" htmlFor="expiresAtUtc">Expires</label>
               <Input
                 id="expiresAtUtc"
                 type="datetime-local"
@@ -113,15 +109,15 @@ export function DocumentCreatePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="sizeBytes">Dimensiune bytes</label>
+              <label className="text-sm font-medium" htmlFor="sizeBytes">Size (bytes)</label>
               <Input id="sizeBytes" type="number" min={1} value={form.sizeBytes} onChange={(event) => setForm((current) => ({ ...current, sizeBytes: Number(event.target.value) }))} />
             </div>
 
             {errorMessage ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive md:col-span-2">{errorMessage}</p> : null}
 
             <div className="flex gap-3 md:col-span-2">
-              <Button type="submit" disabled={saving}>{saving ? 'Se salvează...' : 'Creează document'}</Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/documents')}>Renunță</Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create document'}</Button>
+              <Button type="button" variant="outline" onClick={() => navigate('/documents')}>Cancel</Button>
             </div>
           </form>
         </CardContent>

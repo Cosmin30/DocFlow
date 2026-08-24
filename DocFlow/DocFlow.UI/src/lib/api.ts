@@ -125,7 +125,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
             ok: false,
             status: retryResponse.status,
             data: retryParsed.data,
-            error: extractErrorMessage(retryParsed.raw, retryResponse.statusText || 'A apărut o eroare la server.'),
+            error: extractErrorMessage(retryParsed.raw, retryResponse.statusText || 'Server error.'),
           }
         }
       }
@@ -134,7 +134,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
         ok: false,
         status: 401,
         data: null,
-        error: 'Sesiunea a expirat. Autentifică-te din nou.',
+        error: 'Session expired. Please sign in again.',
       }
     }
 
@@ -143,7 +143,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
         ok: false,
         status: response.status,
         data: parsed.data,
-        error: extractErrorMessage(parsed.raw, response.statusText || 'A apărut o eroare la server.'),
+        error: extractErrorMessage(parsed.raw, response.statusText || 'Server error.'),
       }
     }
 
@@ -153,7 +153,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
       ok: false,
       status: 0,
       data: null,
-      error: error instanceof Error ? error.message : 'Nu am putut contacta serverul.',
+      error: error instanceof Error ? error.message : 'Unable to reach the server.',
     }
   }
 }
