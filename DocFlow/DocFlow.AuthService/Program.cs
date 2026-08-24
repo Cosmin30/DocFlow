@@ -4,6 +4,7 @@ using DocFlow.AuthService.Infrastructure.Repositories;
 using DocFlow.AuthService.Infrastructure.Security;
 using DocFlow.BuildingBlocks.Security;
 using DocFlow.BuildingBlocks.Messaging;
+using DocFlow.BuildingBlocks.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -22,6 +23,18 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
+builder.Services.AddDocFlowHealthChecks("DocFlow.AuthService");
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 30;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 5;
+    });
+});
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -45,8 +58,10 @@ if (app.Environment.IsDevelopment())
 app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapDocFlowHealthChecks();
 
 app.Run();

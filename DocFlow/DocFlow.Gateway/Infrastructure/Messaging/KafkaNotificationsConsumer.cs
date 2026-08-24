@@ -23,7 +23,7 @@ public sealed class KafkaNotificationsConsumer(
             BootstrapServers = bootstrapServers,
             GroupId = "docflow-gateway-notifications",
             AutoOffsetReset = AutoOffsetReset.Earliest,
-            EnableAutoCommit = true
+            EnableAutoCommit = false
         };
 
         using var consumer = new ConsumerBuilder<string, string>(config).Build();
@@ -66,6 +66,8 @@ public sealed class KafkaNotificationsConsumer(
                     await hubContext.Clients.Group($"tenant:{evt.TenantId}:user:{evt.UserId}")
                         .SendAsync("notification", payload, cancellationToken: stoppingToken);
                 }
+
+                consumer.Commit(result);
             }
             catch (OperationCanceledException)
             {

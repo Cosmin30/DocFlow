@@ -24,7 +24,7 @@ public sealed class KafkaAuditConsumer(
             BootstrapServers = bootstrapServers,
             GroupId = "docflow-audit-service",
             AutoOffsetReset = AutoOffsetReset.Earliest,
-            EnableAutoCommit = true
+            EnableAutoCommit = false
         };
 
         using var consumer = new ConsumerBuilder<string, string>(config).Build();
@@ -49,6 +49,7 @@ public sealed class KafkaAuditConsumer(
                 }
 
                 await HandleMessageAsync(result.Topic, result.Message.Value, cancellationToken: stoppingToken);
+                consumer.Commit(result);
             }
             catch (OperationCanceledException)
             {
