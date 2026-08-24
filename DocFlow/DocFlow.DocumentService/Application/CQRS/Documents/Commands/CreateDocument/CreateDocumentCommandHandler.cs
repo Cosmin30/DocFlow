@@ -1,6 +1,6 @@
+using DocFlow.DocumentService.Application.Abstractions;
 using DocFlow.DocumentService.Application.CQRS.Abstractions;
 using DocFlow.DocumentService.Domain.Entities;
-using DocFlow.DocumentService.Infrastructure.Repositories;
 using DocFlow.BuildingBlocks.Messaging;
 using DocFlow.BuildingBlocks.Messaging.Events;
 

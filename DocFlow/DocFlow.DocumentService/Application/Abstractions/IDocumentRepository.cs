@@ -1,6 +1,6 @@
 using DocFlow.DocumentService.Domain.Entities;
 
-namespace DocFlow.DocumentService.Infrastructure.Repositories;
+namespace DocFlow.DocumentService.Application.Abstractions;
 
 public interface IDocumentRepository
 {

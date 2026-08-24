@@ -1,4 +1,5 @@
 using DocFlow.BuildingBlocks.Security;
+using DocFlow.DocumentService.Application.Abstractions;
 using DocFlow.DocumentService.Application.CQRS.Abstractions;
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.CreateDocument;
 using DocFlow.DocumentService.Application.CQRS.Documents.Commands.RestoreDocumentVersion;

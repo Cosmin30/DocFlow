@@ -1,3 +1,4 @@
+using DocFlow.DocumentService.Application.Abstractions;
 using DocFlow.DocumentService.Domain.Entities;
 using DocFlow.DocumentService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
