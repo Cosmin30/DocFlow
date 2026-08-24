@@ -25,47 +25,82 @@ public sealed class DocumentsController(
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var documents = await getDocumentsHandler.Handle(new GetDocumentsQuery(User.GetTenantId()), cancellationToken);
-        return Ok(documents);
+        try
+        {
+            var documents = await getDocumentsHandler.Handle(new GetDocumentsQuery(User.GetTenantId()), cancellationToken);
+            return Ok(documents);
+        }
+        catch (Exception ex)
+        {
+            return Problem(ex.Message, statusCode: 500);
+        }
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDocumentRequest request, CancellationToken cancellationToken)
     {
-        var document = await createDocumentHandler.Handle(
-            new CreateDocumentCommand(User.GetTenantId(), User.GetUserId(), request),
-            cancellationToken);
+        try
+        {
+            var document = await createDocumentHandler.Handle(
+                new CreateDocumentCommand(User.GetTenantId(), User.GetUserId(), request),
+                cancellationToken);
 
-        return CreatedAtAction(nameof(GetVersions), new { id = document.Id }, document);
+            return CreatedAtAction(nameof(GetVersions), new { id = document.Id }, document);
+        }
+        catch (Exception ex)
+        {
+            return Problem(ex.Message, statusCode: 500);
+        }
     }
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDocumentRequest request, CancellationToken cancellationToken)
     {
-        var document = await updateDocumentHandler.Handle(
-            new UpdateDocumentCommand(id, User.GetTenantId(), User.GetUserId(), request),
-            cancellationToken);
+        try
+        {
+            var document = await updateDocumentHandler.Handle(
+                new UpdateDocumentCommand(id, User.GetTenantId(), User.GetUserId(), request),
+                cancellationToken);
 
-        return document is null ? NotFound() : Ok(document);
+            return document is null ? NotFound() : Ok(document);
+        }
+        catch (Exception ex)
+        {
+            return Problem(ex.Message, statusCode: 500);
+        }
     }
 
     [HttpGet("{id:guid}/versions")]
     public async Task<IActionResult> GetVersions(Guid id, CancellationToken cancellationToken)
     {
-        var versions = await getDocumentVersionsHandler.Handle(
-            new GetDocumentVersionsQuery(id, User.GetTenantId()),
-            cancellationToken);
+        try
+        {
+            var versions = await getDocumentVersionsHandler.Handle(
+                new GetDocumentVersionsQuery(id, User.GetTenantId()),
+                cancellationToken);
 
-        return Ok(versions);
+            return Ok(versions);
+        }
+        catch (Exception ex)
+        {
+            return Problem(ex.Message, statusCode: 500);
+        }
     }
 
     [HttpPost("{id:guid}/versions/{versionNumber:int}/restore")]
     public async Task<IActionResult> Restore(Guid id, int versionNumber, CancellationToken cancellationToken)
     {
-        var restored = await restoreDocumentVersionHandler.Handle(
-            new RestoreDocumentVersionCommand(id, versionNumber, User.GetTenantId(), User.GetUserId()),
-            cancellationToken);
+        try
+        {
+            var restored = await restoreDocumentVersionHandler.Handle(
+                new RestoreDocumentVersionCommand(id, versionNumber, User.GetTenantId(), User.GetUserId()),
+                cancellationToken);
 
-        return restored ? Ok() : NotFound();
+            return restored ? Ok() : NotFound();
+        }
+        catch (Exception ex)
+        {
+            return Problem(ex.Message, statusCode: 500);
+        }
     }
 }
