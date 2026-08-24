@@ -1,4 +1,5 @@
 using DocFlow.BuildingBlocks.Messaging;
+using DocFlow.BuildingBlocks.Security;
 using Serilog;
 using DocFlow.Gateway.Hubs;
 using DocFlow.Gateway.Infrastructure.Messaging;
@@ -12,6 +13,7 @@ builder.Host.UseElasticsearchLogging(
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDocFlowJwtAuthentication(builder.Configuration);
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 builder.Services.AddSignalR();
 
@@ -28,8 +30,12 @@ if (app.Environment.IsDevelopment())
 app.UseDocFlowSerilogRequestLogging();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGet("/", () => Results.Ok(new { name = "DocFlow Gateway", status = "running" }));
 app.MapHub<NotificationsHub>("/hubs/notifications");
-app.MapReverseProxy();
+
+app.MapReverseProxy().RequireAuthorization();
 
 app.Run();
