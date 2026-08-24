@@ -66,7 +66,6 @@ public sealed class AuthService(
             if (user.FailedLoginAttempts >= 5)
             {
                 user.LockedUntilUtc = DateTime.UtcNow.AddMinutes(15);
-                user.FailedLoginAttempts = 0;
             }
 
             await userRepository.SaveChangesAsync(cancellationToken);
@@ -98,7 +97,7 @@ public sealed class AuthService(
     {
         var hashed = tokenService.Hash(request.RefreshToken);
         var token = await refreshTokenRepository.GetByHashAsync(hashed, cancellationToken);
-        if (token is null || token.ExpiresAtUtc <= DateTime.UtcNow)
+        if (token is null || token.IsRevoked || token.ExpiresAtUtc <= DateTime.UtcNow)
         {
             return AuthResult.Fail("Invalid refresh token.");
         }
