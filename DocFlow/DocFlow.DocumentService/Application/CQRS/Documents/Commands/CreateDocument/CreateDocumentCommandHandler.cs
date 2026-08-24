@@ -21,7 +21,10 @@ public sealed class CreateDocumentCommandHandler(IDocumentRepository repository,
             TagsCsv = command.Request.TagsCsv,
             ConfidentialityLevel = command.Request.ConfidentialityLevel,
             ExpiresAtUtc = command.Request.ExpiresAtUtc,
-            CurrentVersionNumber = 1
+            CurrentVersionNumber = 1,
+            CurrentFileName = command.Request.FileName,
+            CurrentStoragePath = command.Request.StoragePath,
+            CurrentSizeBytes = command.Request.SizeBytes
         };
 
         await repository.AddAsync(document, cancellationToken);

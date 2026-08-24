@@ -45,6 +45,14 @@ public sealed class Document
     [Range(1, int.MaxValue, ErrorMessage = "CurrentVersionNumber must be at least 1.")]
     public int CurrentVersionNumber { get; set; } = 1;
 
+    [StringLength(255)]
+    public string CurrentFileName { get; set; } = string.Empty;
+
+    [StringLength(1000)]
+    public string CurrentStoragePath { get; set; } = string.Empty;
+
+    public long CurrentSizeBytes { get; set; }
+
     [Required(ErrorMessage = "CreatedAtUtc is required.")]
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

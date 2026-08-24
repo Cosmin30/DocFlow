@@ -40,6 +40,10 @@ public sealed class UpdateDocumentCommandHandler(IDocumentRepository repository)
                 UploadedByUserId = command.UserId
             };
 
+            document.CurrentFileName = newVersion.FileName;
+            document.CurrentStoragePath = newVersion.StoragePath;
+            document.CurrentSizeBytes = newVersion.SizeBytes;
+
             await repository.AddVersionAsync(newVersion, cancellationToken);
         }
 

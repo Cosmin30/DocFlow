@@ -22,6 +22,9 @@ public sealed class RestoreDocumentVersionCommandHandler(IDocumentRepository rep
         }
 
         document.CurrentVersionNumber = command.VersionNumber;
+        document.CurrentFileName = version.FileName;
+        document.CurrentStoragePath = version.StoragePath;
+        document.CurrentSizeBytes = version.SizeBytes;
         await repository.SaveChangesAsync(cancellationToken);
 
         return true;
