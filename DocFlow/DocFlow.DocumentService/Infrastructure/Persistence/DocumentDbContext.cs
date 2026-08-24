@@ -1,4 +1,5 @@
 using DocFlow.DocumentService.Domain.Entities;
+using DocFlow.BuildingBlocks.Domain;
 using DocFlow.BuildingBlocks.Messaging.Outbox;
 using DocFlow.BuildingBlocks.Validation;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +14,27 @@ public sealed class DocumentDbContext(DbContextOptions<DocumentDbContext> option
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Document>()
-            .HasIndex(x => new { x.TenantId, x.Department, x.Category });
+        modelBuilder.Entity<Document>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(x => new { x.TenantId, x.Department, x.Category });
+            entity.Property(e => e.RowVersion).IsRowVersion();
 
-        modelBuilder.Entity<DocumentVersion>()
-            .HasIndex(x => new { x.DocumentId, x.VersionNumber })
-            .IsUnique();
+            entity.HasQueryFilter(e => !e.IsDeleted);
+
+            entity.OwnsMany(e => e.DomainEvents, d =>
+            {
+                d.WithOwner();
+            });
+
+            entity.Navigation(e => e.Versions).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<DocumentVersion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(x => new { x.DocumentId, x.VersionNumber }).IsUnique();
+        });
 
         modelBuilder.AddOutboxModelCreating();
     }

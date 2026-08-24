@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using DocFlow.BuildingBlocks.Domain;
 
 namespace DocFlow.DocumentService.Domain.Entities;
 
@@ -10,49 +10,181 @@ public enum ConfidentialityLevel
     Strict
 }
 
-public sealed class Document
+public sealed class Document : AggregateRoot
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    private readonly List<DocumentVersion> _versions = [];
 
-    [Required(ErrorMessage = "TenantId is required.")]
-    public Guid TenantId { get; set; }
+    public Guid TenantId { get; private set; }
+    public Guid OwnerUserId { get; private set; }
+    public string Title { get; private set; } = string.Empty;
+    public string Category { get; private set; } = string.Empty;
+    public string Department { get; private set; } = string.Empty;
+    public string TagsCsv { get; private set; } = string.Empty;
+    public ConfidentialityLevel ConfidentialityLevel { get; private set; }
+    public DateTime? ExpiresAtUtc { get; private set; }
+    public int CurrentVersionNumber { get; private set; } = 1;
+    public string CurrentFileName { get; private set; } = string.Empty;
+    public string CurrentStoragePath { get; private set; } = string.Empty;
+    public long CurrentSizeBytes { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAtUtc { get; private set; }
+    public byte[] RowVersion { get; private set; } = [];
 
-    [Required(ErrorMessage = "OwnerUserId is required.")]
-    public Guid OwnerUserId { get; set; }
+    public IReadOnlyList<DocumentVersion> Versions => _versions.AsReadOnly();
 
-    [Required(ErrorMessage = "Title is required.")]
-    [StringLength(200, MinimumLength = 2, ErrorMessage = "Title must be between 2 and 200 characters.")]
-    public string Title { get; set; } = string.Empty;
+    private Document() { }
 
-    [Required(ErrorMessage = "Category is required.")]
-    [StringLength(100, MinimumLength = 2, ErrorMessage = "Category must be between 2 and 100 characters.")]
-    public string Category { get; set; } = string.Empty;
+    public static Document Create(
+        Guid tenantId,
+        Guid ownerUserId,
+        string title,
+        string category,
+        string department,
+        string tagsCsv,
+        ConfidentialityLevel confidentialityLevel,
+        DateTime? expiresAtUtc,
+        string fileName,
+        string storagePath,
+        long sizeBytes)
+    {
+        Guard.NotEmpty(tenantId, nameof(tenantId));
+        Guard.NotEmpty(ownerUserId, nameof(ownerUserId));
+        Guard.NotNullOrWhiteSpace(title, nameof(title));
+        Guard.MaxLength(title, 200, nameof(title));
+        Guard.MinLength(title, 2, nameof(title));
+        Guard.NotNullOrWhiteSpace(category, nameof(category));
+        Guard.MaxLength(category, 100, nameof(category));
+        Guard.NotNullOrWhiteSpace(department, nameof(department));
+        Guard.MaxLength(department, 100, nameof(department));
+        Guard.MaxLength(tagsCsv, 500, nameof(tagsCsv));
+        Guard.EnumIsValid(confidentialityLevel, nameof(confidentialityLevel));
+        Guard.NotNullOrWhiteSpace(fileName, nameof(fileName));
+        Guard.NotNullOrWhiteSpace(storagePath, nameof(storagePath));
+        Guard.NotNegative(sizeBytes, nameof(sizeBytes));
 
-    [Required(ErrorMessage = "Department is required.")]
-    [StringLength(100, MinimumLength = 2, ErrorMessage = "Department must be between 2 and 100 characters.")]
-    public string Department { get; set; } = string.Empty;
+        var document = new Document
+        {
+            TenantId = tenantId,
+            OwnerUserId = ownerUserId,
+            Title = title.Trim(),
+            Category = category.Trim(),
+            Department = department.Trim(),
+            TagsCsv = tagsCsv,
+            ConfidentialityLevel = confidentialityLevel,
+            ExpiresAtUtc = expiresAtUtc,
+            CreatedAtUtc = DateTime.UtcNow
+        };
 
-    [MaxLength(500, ErrorMessage = "TagsCsv must be at most 500 characters.")]
-    public string TagsCsv { get; set; } = string.Empty;
+        document.AddVersion(1, fileName, storagePath, sizeBytes, ownerUserId);
 
-    [Required(ErrorMessage = "ConfidentialityLevel is required.")]
-    [EnumDataType(typeof(ConfidentialityLevel), ErrorMessage = "ConfidentialityLevel value is invalid.")]
-    public ConfidentialityLevel ConfidentialityLevel { get; set; }
+        document.RaiseDomainEvent(new DocumentCreatedDomainEvent(document.Id, tenantId, ownerUserId, title));
 
-    public DateTime? ExpiresAtUtc { get; set; }
+        return document;
+    }
 
-    [Range(1, int.MaxValue, ErrorMessage = "CurrentVersionNumber must be at least 1.")]
-    public int CurrentVersionNumber { get; set; } = 1;
+    public void Update(
+        Guid userId,
+        string? title = null,
+        string? category = null,
+        string? department = null,
+        string? tagsCsv = null,
+        ConfidentialityLevel? confidentialityLevel = null,
+        DateTime? expiresAtUtc = null)
+    {
+        if (OwnerUserId != userId)
+            throw new InvalidOperationException("Only the document owner can update it.");
 
-    [StringLength(255)]
-    public string CurrentFileName { get; set; } = string.Empty;
+        if (title is not null)
+        {
+            Guard.NotNullOrWhiteSpace(title, nameof(title));
+            Guard.MaxLength(title, 200, nameof(title));
+            Guard.MinLength(title, 2, nameof(title));
+            Title = title.Trim();
+        }
 
-    [StringLength(1000)]
-    public string CurrentStoragePath { get; set; } = string.Empty;
+        if (category is not null)
+        {
+            Guard.NotNullOrWhiteSpace(category, nameof(category));
+            Guard.MaxLength(category, 100, nameof(category));
+            Category = category.Trim();
+        }
 
-    public long CurrentSizeBytes { get; set; }
+        if (department is not null)
+        {
+            Guard.NotNullOrWhiteSpace(department, nameof(department));
+            Guard.MaxLength(department, 100, nameof(department));
+            Department = department.Trim();
+        }
 
-    [Required(ErrorMessage = "CreatedAtUtc is required.")]
-    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+        if (tagsCsv is not null) TagsCsv = tagsCsv;
+        if (confidentialityLevel.HasValue)
+        {
+            Guard.EnumIsValid(confidentialityLevel.Value, nameof(confidentialityLevel));
+            ConfidentialityLevel = confidentialityLevel.Value;
+        }
+
+        if (expiresAtUtc.HasValue) ExpiresAtUtc = expiresAtUtc;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public DocumentVersion AddVersion(string fileName, string storagePath, long sizeBytes, Guid uploadedByUserId)
+    {
+        Guard.NotNullOrWhiteSpace(fileName, nameof(fileName));
+        Guard.NotNullOrWhiteSpace(storagePath, nameof(storagePath));
+        Guard.NotNegative(sizeBytes, nameof(sizeBytes));
+        Guard.NotEmpty(uploadedByUserId, nameof(uploadedByUserId));
+
+        CurrentVersionNumber++;
+        var version = new DocumentVersion(
+            Id,
+            CurrentVersionNumber,
+            fileName,
+            storagePath,
+            sizeBytes,
+            uploadedByUserId);
+
+        _versions.Add(version);
+
+        CurrentFileName = fileName;
+        CurrentStoragePath = storagePath;
+        CurrentSizeBytes = sizeBytes;
+        UpdatedAtUtc = DateTime.UtcNow;
+
+        return version;
+    }
+
+    public void RestoreVersion(DocumentVersion version, Guid userId)
+    {
+        if (OwnerUserId != userId)
+            throw new InvalidOperationException("Only the document owner can restore versions.");
+
+        if (version is null)
+            throw new ArgumentNullException(nameof(version));
+
+        if (version.DocumentId != Id)
+            throw new InvalidOperationException("Version does not belong to this document.");
+
+        CurrentVersionNumber = version.VersionNumber;
+        CurrentFileName = version.FileName;
+        CurrentStoragePath = version.StoragePath;
+        CurrentSizeBytes = version.SizeBytes;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void Delete(Guid userId)
+    {
+        if (OwnerUserId != userId)
+            throw new InvalidOperationException("Only the document owner can delete it.");
+
+        IsDeleted = true;
+        DeletedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = DateTime.UtcNow;
+
+        RaiseDomainEvent(new DocumentDeletedDomainEvent(Id, TenantId, userId));
+    }
 }
+
+public record DocumentCreatedDomainEvent(Guid DocumentId, Guid TenantId, Guid OwnerUserId, string Title) : DomainEvent;
+public record DocumentDeletedDomainEvent(Guid DocumentId, Guid TenantId, Guid OwnerUserId) : DomainEvent;

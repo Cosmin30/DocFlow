@@ -1,6 +1,4 @@
 using DocFlow.DocumentService.Application.Abstractions;
-using DocFlow.DocumentService.Application.CQRS.Abstractions;
-using DocFlow.DocumentService.Domain.Entities;
 
 namespace DocFlow.DocumentService.Application.CQRS.Documents.Commands.UpdateDocument;
 
@@ -10,41 +8,24 @@ public sealed class UpdateDocumentCommandHandler(IDocumentRepository repository)
     public async Task<Document?> Handle(UpdateDocumentCommand command, CancellationToken cancellationToken)
     {
         var document = await repository.GetByIdAsync(command.Id, command.TenantId, cancellationToken);
-        if (document is null)
-        {
-            return null;
-        }
+        if (document is null) return null;
 
-        if (document.OwnerUserId != command.UserId)
-        {
-            return null;
-        }
-
-        document.Title = command.Request.Title ?? document.Title;
-        document.Category = command.Request.Category ?? document.Category;
-        document.Department = command.Request.Department ?? document.Department;
-        document.TagsCsv = command.Request.TagsCsv ?? document.TagsCsv;
-        document.ConfidentialityLevel = command.Request.ConfidentialityLevel ?? document.ConfidentialityLevel;
-        document.ExpiresAtUtc = command.Request.ExpiresAtUtc ?? document.ExpiresAtUtc;
+        document.Update(
+            command.UserId,
+            command.Request.Title,
+            command.Request.Category,
+            command.Request.Department,
+            command.Request.TagsCsv,
+            command.Request.ConfidentialityLevel,
+            command.Request.ExpiresAtUtc);
 
         if (!string.IsNullOrWhiteSpace(command.Request.NewFileName) && !string.IsNullOrWhiteSpace(command.Request.NewStoragePath))
         {
-            document.CurrentVersionNumber++;
-            var newVersion = new DocumentVersion
-            {
-                DocumentId = document.Id,
-                VersionNumber = document.CurrentVersionNumber,
-                FileName = command.Request.NewFileName,
-                StoragePath = command.Request.NewStoragePath,
-                SizeBytes = command.Request.NewSizeBytes ?? 0,
-                UploadedByUserId = command.UserId
-            };
-
-            document.CurrentFileName = newVersion.FileName;
-            document.CurrentStoragePath = newVersion.StoragePath;
-            document.CurrentSizeBytes = newVersion.SizeBytes;
-
-            await repository.AddVersionAsync(newVersion, cancellationToken);
+            document.AddVersion(
+                command.Request.NewFileName,
+                command.Request.NewStoragePath,
+                command.Request.NewSizeBytes ?? 0,
+                command.UserId);
         }
 
         await repository.SaveChangesAsync(cancellationToken);
