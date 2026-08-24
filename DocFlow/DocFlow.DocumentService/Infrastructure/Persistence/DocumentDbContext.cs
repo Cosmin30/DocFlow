@@ -22,10 +22,7 @@ public sealed class DocumentDbContext(DbContextOptions<DocumentDbContext> option
 
             entity.HasQueryFilter(e => !e.IsDeleted);
 
-            entity.OwnsMany(e => e.DomainEvents, d =>
-            {
-                d.WithOwner();
-            });
+            entity.Ignore(e => e.DomainEvents);
 
             entity.Navigation(e => e.Versions).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
